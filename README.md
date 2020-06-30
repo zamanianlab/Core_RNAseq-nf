@@ -5,11 +5,11 @@ nf RNA-seq pipeline for WB/WBP species
 - main-se.nf (single-end reads)
 - main-pe.nf (paired-end reads)
 
-## Output
-- /trim_stats/ (read trimming log files)
-- /counts/ ("gene_count_matrix.csv" & "transcript_count_matrix.csv" from Stringtie)
-- /expression/ (HISAT2 outputs and log files)
-- /bams/ (sorted .bam files)
+## Output dirs and files
+- /trim_stats/:  read trimming log files
+- /counts/:  "gene_count_matrix.csv"; "transcript_count_matrix.csv" from Stringtie
+- /expression/: HISAT2 outputs and log files
+- /bams/: sorted .bam files
   
 ## Example
 
