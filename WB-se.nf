@@ -30,6 +30,10 @@ println "prjn: $params.prjn"
 // flag for final stringtie_table_counts process (--stc)
 params.stc = false
 
+params.rlen = null
+if( !params.rlen ) error "Missing length (average read length) parameter"
+println "prjn: $params.rlen"
+
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
 ////////////////////////////////////////////////
@@ -63,29 +67,6 @@ process trim_reads {
    """
 }
 trimmed_fqs.set { trimmed_reads_hisat }
-
-// process trimmomatic {
-//
-//    cpus large_core
-//    tag { id }
-//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
-//
-//    input:
-//        set val(id), file(reads) from fqs
-//
-//    output:
-//        set id_out, file("${id_out}_trim.fq.gz") into trimmed_fqs
-//        file("*_trimout.txt") into trim_log
-//
-//    script:
-//    id_out = id.replace('.fastq.gz', '')
-//
-//    """
-//        trimmomatic SE -threads ${large_core} ${reads} ${id_out}_trim.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-SE.fa:2:80:10 MINLEN:50 &> ${id_out}_trimout.txt
-//
-//    """
-// }
-// trimmed_fqs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
@@ -216,7 +197,7 @@ process stringtie_table_counts {
         file ("transcript_count_matrix.csv") into transcript_count_matrix
 
     """
-        python ${prepDE} -i ${output}/expression -l 100 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+        python ${prepDE} -i ${output}/expression -l ${rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
     """
 }
