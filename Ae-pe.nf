@@ -58,7 +58,6 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 ////////////////////////////////////////////////
 // ** - LOAD in Aedes HiSat2 index and geneset files
 ////////////////////////////////////////////////
-// aedesgenome points to /mnt/genomes/Other/Aedes_aegypti/
 
 geneset_stringtie = file("${aedesgenome}/annotation/geneset_h.gtf.gz")
 hs2_indices = Channel.fromPath("${aedesgenome}/Hisat2_indexes/*.ht2").collect()
