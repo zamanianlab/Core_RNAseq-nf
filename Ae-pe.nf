@@ -1,8 +1,8 @@
 #!/usr/bin/env nextflow
 
 // Edit nextflow.configuration!
-data=config.brc_location
 aux=config.aux_location
+data=config.data_location // data_location or btdata_location
 output=config.output_location
 aedesgenome=config.aedesgenome_location
 
