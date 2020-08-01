@@ -96,48 +96,31 @@ reference_fa.into { reference_hisat }
 // ** - HiSat2/Stringtie pipeline
 ////////////////////////////////////////////////
 
-// ** - Create HiSat2 Index using reference genome and annotation file
+// Create HiSat2 Index using reference genome and annotation file
 extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
 extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
-
-process hisat2_indexing {
-
-    input:
-        file("geneset.gtf.gz") from geneset_hisat
-        file("reference.fa.gz") from reference_hisat
-
-    output:
-        file("splice.ss") into splice_hisat
-        file("exon.exon") into exon_hisat
-        file("reference.fa.gz") into reference_build_hisat
-
-    """
-        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
-        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
-    """
-
-}
 
 process build_hisat_index {
 
     cpus large_core
 
     input:
-        file("splice.ss") from splice_hisat
-        file("exon.exon") from exon_hisat
-        file("reference.fa.gz") from reference_build_hisat
+        file("geneset.gtf.gz") from geneset_hisat
+        file("reference.fa.gz") from reference_hisat
 
     output:
         file "*.ht2" into hs2_indices
 
     """
+        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
+        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
         zcat reference.fa.gz > reference.fa
         hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
     """
 
 }
 
-// alignment and stringtie combined
+// Alignment and stringtie combined
 process hisat2_stringtie {
 
     publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
