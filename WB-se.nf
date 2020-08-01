@@ -89,7 +89,7 @@ process fetch_genome {
     """
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
-reference_fa.into { reference_hisat; reference_bwa}
+reference_fa.into { reference_hisat }
 
 
 ////////////////////////////////////////////////
