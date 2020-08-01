@@ -55,11 +55,11 @@ process trim_reads {
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
 
    input:
-       set val(id), file(forward), file(reverse) from fq_pairs
+       tuple val(id), file(forward), file(reverse) from fq_pairs
 
    output:
-       set id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fq_pairs
-       set file("*.html"), file("*.json")  into trim_log
+       tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fq_pairs
+       tuple file("*.html"), file("*.json")  into trim_log
 
    """
        fastp -i $forward -I $reverse -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
@@ -149,7 +149,7 @@ process hisat2_stringtie {
     tag { id }
 
     input:
-        set val(id), file(forward), file(reverse) from trimmed_reads_hisat
+        tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
         file("geneset.gtf.gz") from geneset_stringtie
         file hs2_indices from hs2_indices.first()
 

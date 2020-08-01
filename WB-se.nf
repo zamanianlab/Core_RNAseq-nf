@@ -53,11 +53,11 @@ process trim_reads {
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
 
    input:
-       set val(id), file(reads) from fqs
+       tuple val(id), file(reads) from fqs
 
    output:
-       set id_out, file("${id_out}.fq.gz") into trimmed_fqs
-       set file("*.html"), file("*.json")  into trim_log
+       tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
+       tuple file("*.html"), file("*.json")  into trim_log
 
   script:
       id_out = id.replace('.fastq.gz', '')
@@ -66,7 +66,7 @@ process trim_reads {
        fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
    """
 }
-trimmed_fqs.set { trimmed_reads_hisat }
+trimmed_fqs.into { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
@@ -149,7 +149,7 @@ process hisat2_stringtie {
     tag { id }
 
     input:
-        set val(id), file(reads) from trimmed_reads_hisat
+        tuple val(id), file(reads) from trimmed_reads_hisat
         file("geneset.gtf.gz") from geneset_stringtie
         file hs2_indices from hs2_indices.first()
 
