@@ -9,7 +9,6 @@ large_core=config.large_core
 small_core=config.small_core
 
 // Parameters
-// example: (--dir "200402_AHNNF3DMXX" --release "WBPS13" --species "dirofilaria_immitis" --prjn "PRJEB1797")
 
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
@@ -40,8 +39,9 @@ println "prjn: $params.rlen"
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
+Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
         .set { fq_pairs }
+
 
 ////////////////////////////////////////////////
 // ** TRIM READS

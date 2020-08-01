@@ -27,7 +27,7 @@ println "prjn: $params.rlen"
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}.fq.gz", flat: true)
+Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}.f[a-z]*q.gz", flat: true)
         .set { fq_pairs }
 
 ////////////////////////////////////////////////
@@ -61,7 +61,7 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 // aedesgenome points to /mnt/genomes/Other/Aedes_aegypti/
 
 geneset_stringtie = file("${aedesgenome}/annotation/geneset_h.gtf.gz")
-hs2_indices = Channel.fromPath("${aedesgenome}/Hisat2_indexes/*.ht2").buffer(size:8)
+hs2_indices = Channel.fromPath("${aedesgenome}/Hisat2_indexes/*.ht2").collect()
 
 
 ////////////////////////////////////////////////
