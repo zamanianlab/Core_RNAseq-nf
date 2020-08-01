@@ -160,7 +160,7 @@ process hisat2_stringtie {
 }
 
 ////////////////////////////////////////////////
-// ** - STRINGTIE table counts (run last with --stc flag)
+// ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")

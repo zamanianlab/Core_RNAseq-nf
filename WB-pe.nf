@@ -160,10 +160,7 @@ process hisat2_stringtie {
 }
 
 ////////////////////////////////////////////////
-// ** - STRINGTIE table counts & final commands that run on output dirs (run last with --stc flag)
-// **  add later:    grep -Hn 'reads\|overall' ${output}/expression/*.hisat2_log.txt  | awk '{print $1}' | sed 's/.hisat2_log.txt//g' | sed 's/%//g' > Hisat2_stats.txt
-//    publishDir "${output}/expression", mode: 'copy', pattern: 'Hisat2_stats.txt'
-//        file("Hisat2_stats.txt") into hisat2_stats
+// ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")
