@@ -1,10 +1,10 @@
 #!/usr/bin/env nextflow
 
-// Edit nextflow.configuration!
+// Nextflow.configuration
 aux=config.aux_location
 data=config.data_location // data_location or btdata_location
 output=config.output_location
-aedesgenome=config.aedesgenome_location
+genome_dir=config.genome_location
 
 large_core=config.large_core
 small_core=config.small_core
@@ -59,8 +59,8 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 // ** - LOAD in Aedes HiSat2 index and geneset files
 ////////////////////////////////////////////////
 
-geneset_stringtie = file("${aedesgenome}/annotation/geneset_h.gtf.gz")
-hs2_indices = Channel.fromPath("${aedesgenome}/Hisat2_indexes/*.ht2").collect()
+geneset_stringtie = file("${genome_dir}/Other/Aedes_aegypti/annotation/geneset_h.gtf.gz")
+hs2_indices = Channel.fromPath("${genome_dir}/Other/Aedes_aegypti/Hisat2_indexes/*.ht2").collect()
 
 
 ////////////////////////////////////////////////

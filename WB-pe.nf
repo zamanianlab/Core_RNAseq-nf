@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-// Edit nextflow.configuration!
+// Nextflow.configuration
 aux=config.aux_location
 data=config.btdata_location // data_location or btdata_location
 output=config.output_location
