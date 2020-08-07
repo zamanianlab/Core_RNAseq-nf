@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 
 // Nextflow.configuration
-aux=config.aux_location
 data=config.btdata_location // data_location or btdata_location
 output=config.output_location
+aux=config.aux_location
 
 large_core=config.large_core
 small_core=config.small_core
