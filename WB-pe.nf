@@ -1,12 +1,13 @@
 #!/usr/bin/env nextflow
 
 // Nextflow.configuration
-//data=config.btdata_location // data_location or btdata_location
-//output=config.output_location
-//aux=config.aux_location
 
-//large_core=config.large_core
-//small_core=config.small_core
+data_dir=params.data_dir
+output_dir=params.output_dir
+aux_dir=params.aux_dir
+
+large_core=params.large_core
+small_core=params.small_core
 
 // Parameters
 
