@@ -2,9 +2,9 @@
 
 // Nextflow.configuration
 
-data_dir=params.data_dir
-output_dir=params.output_dir
-aux_dir=params.aux_dir
+data=params.data
+output=params.output
+aux=params.aux
 
 large_core=params.large_core
 small_core=params.small_core
@@ -40,7 +40,7 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data_dir + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
+Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
         .set { fq_pairs }
         .println()
 
