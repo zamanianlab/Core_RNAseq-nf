@@ -10,7 +10,7 @@
 
 // Parameters
 
-println "data_dir: $data_dir"
+println "data_dir: $config.data_dir"
 
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
