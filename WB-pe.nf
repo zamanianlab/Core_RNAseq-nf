@@ -1,12 +1,12 @@
 #!/usr/bin/env nextflow
 
 // Nextflow.configuration
-data=config.btdata_location // data_location or btdata_location
-output=config.output_location
-aux=config.aux_location
+//data=config.btdata_location // data_location or btdata_location
+//output=config.output_location
+//aux=config.aux_location
 
-large_core=config.large_core
-small_core=config.small_core
+//large_core=config.large_core
+//small_core=config.small_core
 
 // Parameters
 
@@ -31,7 +31,7 @@ params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
-println "prjn: $params.rlen"
+println "rlen: $params.rlen"
 
 
 
@@ -39,7 +39,7 @@ println "prjn: $params.rlen"
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
+Channel.fromFilePairs(data_dir + "${dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
         .set { fq_pairs }
         .println()
 
