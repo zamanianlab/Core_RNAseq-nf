@@ -54,7 +54,7 @@ Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: tru
 
 process trim_reads {
 
-   cpus large_core
+   cpus small_core
    tag { id }
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
@@ -67,11 +67,10 @@ process trim_reads {
        tuple file("*.html"), file("*.json")  into trim_log
 
    """
-       fastp -i $forward -I $reverse -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
+       fastp -i $forward -I $reverse -w ${small_core} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
    """
 }
 trimmed_fq_pairs.set { trimmed_reads_hisat }
-
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
