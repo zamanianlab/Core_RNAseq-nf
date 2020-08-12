@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-// Nextflow.configuration
+// Params from config files (system-dependent)
 
 data=params.data
 output=params.output
@@ -9,7 +9,7 @@ aux=params.aux
 large_core=params.large_core
 small_core=params.small_core
 
-// Parameters
+// Global Params
 
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
@@ -34,6 +34,9 @@ params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
+//params.rtype = null
+//if( !params.dir ) error "Missing read type parameter (single = SE; paired = PE)"
+//println "rtype: $params.rtype"
 
 
 ////////////////////////////////////////////////
