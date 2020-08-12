@@ -8,6 +8,8 @@ aux=params.aux
 
 println "data: $data"
 
+println "${data}"
+
 large_core=params.large_core
 small_core=params.small_core
 
