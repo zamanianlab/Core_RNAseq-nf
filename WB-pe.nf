@@ -78,6 +78,8 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 process fetch_genome {
 
+    cpus small_core
+
     output:
         file("geneset.gtf.gz") into geneset_gtf
         file("reference.fa.gz") into reference_fa
