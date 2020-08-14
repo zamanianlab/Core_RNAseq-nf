@@ -16,48 +16,55 @@ if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
 
 params.release = null
-if( !params.release ) error "Missing release parameter"
+if( !params.release ) error "Missing WB release parameter"
 println "release: $params.release"
 
 params.species = null
-if( !params.species ) error "Missing species parameter"
+if( !params.species ) error "Missing WB species parameter"
 println "species: $params.species"
 
 params.prjn = null
-if( !params.species ) error "Missing prjn parameter"
+if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
 
-// flag for final stringtie_table_counts process (--stc)
+params.rtype = null
+if( !params.rtype ) error "Missing read type parameter (single = SE; paired = PE)"
+println "rtype: $params.rtype"
+
+// flags for final stringtie_table_counts process (--stc)
 params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
-//params.rtype = null
-//if( !params.dir ) error "Missing read type parameter (single = SE; paired = PE)"
-//println "rtype: $params.rtype"
+
+////////////////////////////////////////////////
+// ** - Pull in fq files (paired vs unpaired)
+////////////////////////////////////////////////
+
+if (params.rtype == "PE") {
+  Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
+          .set { fq_pairs }
+} else if (params.rtype == "SE") {
+  fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
+                          .map { n -> [ n.getName(), n ] }
+} else exit 1, 'rtype not set to SE or PE'
 
 
 ////////////////////////////////////////////////
-// ** - Pull in fq files (paired)
+// ** TRIM READS (SE or PE)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
-        .set { fq_pairs }
-        .println()
-
-
-////////////////////////////////////////////////
-// ** TRIM READS
-////////////////////////////////////////////////
-
-process trim_reads {
+process trim_reads_pe {
 
    cpus small_core
    tag { id }
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
+   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.html'
+   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.json'
+
+   when:
+     rtype == "PE"
 
    input:
        tuple val(id), file(forward), file(reverse) from fq_pairs
@@ -71,6 +78,33 @@ process trim_reads {
    """
 }
 trimmed_fq_pairs.set { trimmed_reads_hisat }
+
+process trim_reads_se {
+
+   cpus large_core
+   tag { id }
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
+
+   when:
+     rtype == "SE"
+
+   input:
+       tuple val(id), file(reads) from fqs
+
+   output:
+       tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
+       tuple file("*.html"), file("*.json")  into trim_log
+
+  script:
+      id_out = id.replace('.fastq.gz', '')
+
+   """
+       fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
+   """
+}
+trimmed_fqs.into { trimmed_reads_hisat }
+
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
@@ -126,13 +160,13 @@ process build_hisat_index {
 
 }
 
-// Alignment and stringtie combined
+// Alignment and stringtie combined (handles both SE and PE)
 process hisat2_stringtie {
 
-    publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
-    publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
-    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
+    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus large_core
     tag { id }
@@ -151,18 +185,35 @@ process hisat2_stringtie {
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
-    """
-        hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-        samtools view -bS ${id}.sam > ${id}.unsorted.bam
-        rm *.sam
-        samtools flagstat ${id}.unsorted.bam
-        samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-        rm *.unsorted.bam
-        samtools index -b ${id}.bam
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-        rm *.gtf
-    """
+        if (rtype == "PE")
+            """
+            hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+            samtools view -bS ${id}.sam > ${id}.unsorted.bam
+            rm *.sam
+            samtools flagstat ${id}.unsorted.bam
+            samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+            rm *.unsorted.bam
+            samtools index -b ${id}.bam
+            zcat geneset.gtf.gz > geneset.gtf
+            stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+            rm *.gtf
+            """
+        else if (rtype == "SE")
+            """
+            hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+            samtools view -bS ${id}.sam > ${id}.unsorted.bam
+            rm *.sam
+            samtools flagstat ${id}.unsorted.bam
+            samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+            rm *.unsorted.bam
+            samtools index -b ${id}.bam
+            zcat geneset.gtf.gz > geneset.gtf
+            stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+            rm *.gtf
+            """
+        else
+            """
+            """
 }
 
 ////////////////////////////////////////////////
@@ -174,7 +225,7 @@ process stringtie_counts_final {
 
     echo true
 
-    publishDir "${output}/counts", mode: 'copy', pattern: '*.csv'
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
     cpus small_core
 
