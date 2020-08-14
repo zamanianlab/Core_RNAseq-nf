@@ -43,13 +43,13 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files (paired vs unpaired)
 ////////////////////////////////////////////////
 
-if (params.rtype == "PE") {
+// if (params.rtype == "PE") {
   Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
           .set { fq_pairs }
-} else if (params.rtype == "SE") {
-  fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
-                          .map { n -> [ n.getName(), n ] }
-} else exit 1, 'rtype not set to SE or PE'
+// } else if (params.rtype == "SE") {
+//   fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
+//                           .map { n -> [ n.getName(), n ] }
+// } else exit 1, 'rtype not set to SE or PE'
 
 
 ////////////////////////////////////////////////
@@ -65,6 +65,7 @@ process trim_reads_pe {
 
    when:
      rtype == "PE"
+     println rtype
 
    input:
        tuple val(id), file(forward), file(reverse) from fq_pairs
