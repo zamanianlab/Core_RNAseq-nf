@@ -42,13 +42,13 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files (paired vs unpaired)
 ////////////////////////////////////////////////
 
-if (!params.se) {
+if ( !params.se ) {
   Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
-          .set { fq_pairs }
-} else if (params.se) {
+          .set { fqs }
+} else if ( params.se ) {
   fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
                           .map { n -> [ n.getName(), n ] }
-} else exit 1, 'rtype not set to SE or PE'
+} else exit 1, 'error loading fqs'
 
 
 ////////////////////////////////////////////////
@@ -66,7 +66,7 @@ process trim_reads_pe {
    !params.se
 
    input:
-       tuple val(id), file(forward), file(reverse) from fq_pairs
+       tuple val(id), file(forward), file(reverse) from fqs
 
    output:
        tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fq_pairs
