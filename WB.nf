@@ -79,31 +79,31 @@ process trim_reads_pe {
 }
 trimmed_fq_pairs.set { trimmed_reads_hisat }
 
-process trim_reads_se {
-
-   cpus small_core
-   tag { id }
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
-
-   when:
-     rtype == "SE"
-
-   input:
-       tuple val(id), file(reads) from fqs
-
-   output:
-       tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
-       tuple file("*.html"), file("*.json")  into trim_log
-
-  script:
-      id_out = id.replace('.fastq.gz', '')
-
-   """
-       fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
-   """
-}
-trimmed_fqs.into { trimmed_reads_hisat }
+// process trim_reads_se {
+//
+//    cpus small_core
+//    tag { id }
+//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
+//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
+//
+//    when:
+//      rtype == "SE"
+//
+//    input:
+//        tuple val(id), file(reads) from fqs
+//
+//    output:
+//        tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
+//        tuple file("*.html"), file("*.json")  into trim_log
+//
+//   script:
+//       id_out = id.replace('.fastq.gz', '')
+//
+//    """
+//        fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
+//    """
+// }
+// trimmed_fqs.into { trimmed_reads_hisat }
 
 
 ////////////////////////////////////////////////
