@@ -63,9 +63,9 @@ process trim_reads_pe {
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.json'
 
-   when:
-     rtype == "PE"
-     println rtype
+   // when:
+   //   rtype == "PE"
+   //   println rtype
 
    input:
        tuple val(id), file(forward), file(reverse) from fq_pairs
