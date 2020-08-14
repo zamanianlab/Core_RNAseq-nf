@@ -27,9 +27,6 @@ params.prjn = null
 if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
 
-params.se = false
-println "se: $params.se"
-
 // flags for final stringtie_table_counts process (--stc)
 params.stc = false
 
@@ -39,31 +36,23 @@ println "rlen: $params.rlen"
 
 
 ////////////////////////////////////////////////
-// ** - Pull in fq files (paired vs unpaired)
+// ** - Pull in fq files
 ////////////////////////////////////////////////
 
-if ( !params.se ) {
-  Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
+Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
           .set { fqs }
-} else if ( params.se ) {
-  fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
-                          .map { n -> [ n.getName(), n ] }
-} else exit 1, 'error loading fqs'
 
 
 ////////////////////////////////////////////////
-// ** TRIM READS (SE or PE)
+// ** TRIM READS
 ////////////////////////////////////////////////
 
-process trim_reads_pe {
+process trim_reads {
 
    cpus small_core
    tag { id }
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.json'
-
-   when:
-       !params.se
 
    input:
        tuple val(id), file(forward), file(reverse) from fqs
@@ -77,32 +66,6 @@ process trim_reads_pe {
    """
 }
 trimmed_fqs.set { trimmed_reads_hisat }
-
-process trim_reads_se {
-
-   cpus small_core
-   tag { id }
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
-
-   when:
-       params.se
-
-   input:
-       tuple val(id), file(reads) from fqs
-
-   output:
-       tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
-       tuple file("*.html"), file("*.json")  into trim_log
-
-  script:
-      id_out = id.replace('.fastq.gz', '')
-
-   """
-       fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
-   """
-}
-trimmed_fqs.into { trimmed_reads_hisat }
 
 
 ////////////////////////////////////////////////
@@ -184,35 +147,20 @@ process hisat2_stringtie {
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
-        if (rtype == "PE")
-            """
-            hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-            samtools view -bS ${id}.sam > ${id}.unsorted.bam
-            rm *.sam
-            samtools flagstat ${id}.unsorted.bam
-            samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-            rm *.unsorted.bam
-            samtools index -b ${id}.bam
-            zcat geneset.gtf.gz > geneset.gtf
-            stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-            rm *.gtf
-            """
-        else if (rtype == "SE")
-            """
-            hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-            samtools view -bS ${id}.sam > ${id}.unsorted.bam
-            rm *.sam
-            samtools flagstat ${id}.unsorted.bam
-            samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-            rm *.unsorted.bam
-            samtools index -b ${id}.bam
-            zcat geneset.gtf.gz > geneset.gtf
-            stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-            rm *.gtf
-            """
-        else
-            """
-            """
+
+        """
+          hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+          samtools view -bS ${id}.sam > ${id}.unsorted.bam
+          rm *.sam
+          samtools flagstat ${id}.unsorted.bam
+          samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+          rm *.unsorted.bam
+          samtools index -b ${id}.bam
+          zcat geneset.gtf.gz > geneset.gtf
+          stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+          rm *.gtf
+        """
+
 }
 
 ////////////////////////////////////////////////

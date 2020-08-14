@@ -1,52 +1,55 @@
 #!/usr/bin/env nextflow
 
-// Nextflow.configuration
-aux=config.aux_location
-data=config.btdata_location // data_location or btdata_location
-output=config.output_location
+// Params from config files (system-dependent)
 
-large_core=config.large_core
-small_core=config.small_core
+data=params.data
+output=params.output
+aux=params.aux
 
-// Parameters
+large_core=params.large_core
+small_core=params.small_core
+
+// Global Params
 
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
 
 params.release = null
-if( !params.release ) error "Missing release parameter"
+if( !params.release ) error "Missing WB release parameter"
 println "release: $params.release"
 
 params.species = null
-if( !params.species ) error "Missing species parameter"
+if( !params.species ) error "Missing WB species parameter"
 println "species: $params.species"
 
 params.prjn = null
-if( !params.species ) error "Missing prjn parameter"
+if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
 
-// flag for final stringtie_table_counts process (--stc)
+// flags for final stringtie_table_counts process (--stc)
 params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
-println "prjn: $params.rlen"
+println "rlen: $params.rlen"
+
 
 ////////////////////////////////////////////////
-// ** - Pull in fq files (single)
+// ** - Pull in fq files
 ////////////////////////////////////////////////
 
 fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
                         .map { n -> [ n.getName(), n ] }
 
+
 ////////////////////////////////////////////////
 // ** TRIM READS
 ////////////////////////////////////////////////
 
-process trim_reads {
+process trim_reads_se {
 
-   cpus large_core
+   cpus small_core
    tag { id }
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
@@ -67,11 +70,14 @@ process trim_reads {
 }
 trimmed_fqs.into { trimmed_reads_hisat }
 
+
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
 process fetch_genome {
+
+    cpus small_core
 
     output:
         file("geneset.gtf.gz") into geneset_gtf
@@ -83,8 +89,8 @@ process fetch_genome {
 
     """
         echo '${prefix}'
-        curl ${prefix}/${params.species}.${params.prjn}.${params.release}.canonical_geneset.gtf.gz > geneset.gtf.gz
-        curl ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz > reference.fa.gz
+        wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.canonical_geneset.gtf.gz -O geneset.gtf.gz
+        wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz -O reference.fa.gz
     """
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
@@ -110,7 +116,6 @@ process build_hisat_index {
     output:
         file "*.ht2" into hs2_indices
 
-
     """
         zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
         zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
@@ -120,19 +125,19 @@ process build_hisat_index {
 
 }
 
-// Alignment and stringtie combined
+// Alignment and stringtie combined (handles both SE and PE)
 process hisat2_stringtie {
 
-    publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
-    publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
-    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
+    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus large_core
     tag { id }
 
     input:
-        tuple val(id), file(reads) from trimmed_reads_hisat
+        tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
         file("geneset.gtf.gz") from geneset_stringtie
         file hs2_indices from hs2_indices.first()
 
@@ -145,18 +150,19 @@ process hisat2_stringtie {
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
-    """
-        hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-        samtools view -bS ${id}.sam > ${id}.unsorted.bam
-        rm *.sam
-        samtools flagstat ${id}.unsorted.bam
-        samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-        rm *.unsorted.bam
-        samtools index -b ${id}.bam
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-        rm *.gtf
-    """
+        """
+          hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+          samtools view -bS ${id}.sam > ${id}.unsorted.bam
+          rm *.sam
+          samtools flagstat ${id}.unsorted.bam
+          samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+          rm *.unsorted.bam
+          samtools index -b ${id}.bam
+          zcat geneset.gtf.gz > geneset.gtf
+          stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+          rm *.gtf
+        """
+
 }
 
 ////////////////////////////////////////////////
@@ -164,11 +170,11 @@ process hisat2_stringtie {
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_table_counts {
+process stringtie_counts_final {
 
     echo true
 
-    publishDir "${output}/counts", mode: 'copy', pattern: '*.csv'
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
     cpus small_core
 
