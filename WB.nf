@@ -63,7 +63,7 @@ process trim_reads_pe {
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.json'
 
    when:
-   !params.se
+       !params.se
 
    input:
        tuple val(id), file(forward), file(reverse) from fqs
@@ -76,7 +76,7 @@ process trim_reads_pe {
        fastp -i $forward -I $reverse -w ${small_core} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
    """
 }
-trimmed_fq_pairs.set { trimmed_reads_hisat }
+trimmed_fqs.set { trimmed_reads_hisat }
 
 process trim_reads_se {
 
@@ -86,7 +86,7 @@ process trim_reads_se {
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
 
    when:
-   params.se
+       params.se
 
    input:
        tuple val(id), file(reads) from fqs
