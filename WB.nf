@@ -27,9 +27,8 @@ params.prjn = null
 if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
 
-params.rtype = null
-if( !params.rtype ) error "Missing read type parameter (single = SE; paired = PE)"
-println "rtype: $params.rtype"
+params.se = false
+println "se: $params.se"
 
 // flags for final stringtie_table_counts process (--stc)
 params.stc = false
@@ -43,13 +42,13 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files (paired vs unpaired)
 ////////////////////////////////////////////////
 
-// if (params.rtype == "PE") {
+if (!params.se) {
   Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
           .set { fq_pairs }
-// } else if (params.rtype == "SE") {
-//   fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
-//                           .map { n -> [ n.getName(), n ] }
-// } else exit 1, 'rtype not set to SE or PE'
+} else if (params.se) {
+  fqs = Channel.fromPath(data + "${params.dir}/*.f[a-z]*q.gz")
+                          .map { n -> [ n.getName(), n ] }
+} else exit 1, 'rtype not set to SE or PE'
 
 
 ////////////////////////////////////////////////
@@ -63,9 +62,8 @@ process trim_reads_pe {
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.json'
 
-   // when:
-   //   rtype == "PE"
-   //   println rtype
+   when:
+   !params.se
 
    input:
        tuple val(id), file(forward), file(reverse) from fq_pairs
@@ -80,31 +78,31 @@ process trim_reads_pe {
 }
 trimmed_fq_pairs.set { trimmed_reads_hisat }
 
-// process trim_reads_se {
-//
-//    cpus small_core
-//    tag { id }
-//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
-//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
-//
-//    when:
-//      rtype == "SE"
-//
-//    input:
-//        tuple val(id), file(reads) from fqs
-//
-//    output:
-//        tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
-//        tuple file("*.html"), file("*.json")  into trim_log
-//
-//   script:
-//       id_out = id.replace('.fastq.gz', '')
-//
-//    """
-//        fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
-//    """
-// }
-// trimmed_fqs.into { trimmed_reads_hisat }
+process trim_reads_se {
+
+   cpus small_core
+   tag { id }
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
+
+   when:
+   params.se
+
+   input:
+       tuple val(id), file(reads) from fqs
+
+   output:
+       tuple id_out, file("${id_out}.fq.gz") into trimmed_fqs
+       tuple file("*.html"), file("*.json")  into trim_log
+
+  script:
+      id_out = id.replace('.fastq.gz', '')
+
+   """
+       fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
+   """
+}
+trimmed_fqs.into { trimmed_reads_hisat }
 
 
 ////////////////////////////////////////////////
