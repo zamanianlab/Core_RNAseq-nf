@@ -81,7 +81,7 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 process trim_reads_se {
 
-   cpus large_core
+   cpus small_core
    tag { id }
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
