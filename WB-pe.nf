@@ -259,11 +259,15 @@ process align_analysis {
       awk '{ if (\$0 ~ "transcript_id") print \$0; else print \$0" transcript_id "";"; }' geneset.gtf | gtf2bed - > geneset.gtf.bed
       cat geneset.gtf.bed | sed '/\tgene\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.gene.bed
       cat geneset.gtf.bed | sed '/\texon\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.exon.bed
-      cat geneset.gtf.bed | sed '/\texon\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.exon.bed
       cat geneset.gtf.bed | sed '/\tfive_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.5utr.bed
       cat geneset.gtf.bed | sed '/\tthree_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.3utr.bed
       bedtools bamtobed -i ${bam} > ${id}.bed
-      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb > ${id}_gene_intersects.bed
+      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa > ${id}_gene_intersects.bed
+      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -v > ${id}_nogene_intersects.bed
+      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa > ${id}_exon_intersects.bed
+      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -v > ${id}_noexon_intersects.bed
+      bedtools intersect -a geneset.5utr.bed -b ${id}.bed -wa > ${id}_5utr_intersects.bed
+      bedtools intersect -a geneset.3utr.bed -b ${id}.bed -wa > ${id}_3utr_intersects.bed
 
     """
 }
