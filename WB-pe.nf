@@ -2,7 +2,7 @@
 
 // Params from config files (system-dependent)
 
-data=params.data
+data=params.data2 // data = btc seq, data2 = uploaded seq
 output=params.output
 aux=params.aux
 
@@ -44,29 +44,71 @@ Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: tru
 
 
 ////////////////////////////////////////////////
-// ** TRIM READS
+// ** - Trim reads
 ////////////////////////////////////////////////
 
 process trim_reads {
 
-   cpus small_core
-   tag { id }
-   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.html'
-   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.json'
+  publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.{json,html}'
 
-   input:
-       tuple val(id), file(forward), file(reverse) from fqs
+  cpus small_core
+  tag { id }
 
-   output:
-       tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
-       tuple file("*.html"), file("*.json")  into trim_log
+  input:
+    tuple val(id), file(forward), file(reverse) from fqs
 
-   """
-       fastp -i $forward -I $reverse -w ${small_core} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
-   """
+  output:
+    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
+    tuple file("*.html"), file("*.json")  into trim_log
+
+  """
+    fastp -i $forward -I $reverse -w ${small_core} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
+  """
 }
-trimmed_fqs.set { trimmed_reads_hisat }
+trimmed_fqs.set { trimmed_reads_hisat;  trimmed_reads_qc}
 
+////////////////////////////////////////////////
+// ** - multiQC of trimmed fqs
+////////////////////////////////////////////////
+
+process fastqc {
+
+    publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
+
+    cpus small_core
+    tag { id }
+
+    input:
+    tuple val(id), file(forward), file(reverse) from trimmed_reads_qc
+
+    output:
+    file "*_fastqc.{zip,html}" into fastqc_results
+
+    script:
+
+    """
+      fastqc -q $forward $reverse
+    """
+}
+
+process multiqc {
+  publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
+
+  cpus small_core
+  tag { id }
+
+    input:
+    file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
+
+    output:
+    file "multiqc_report.html" into multiqc_report
+
+    script:
+
+    """
+      multiqc .
+    """
+}
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
@@ -184,7 +226,7 @@ process stringtie_counts_final {
         file ("transcript_count_matrix.csv") into transcript_count_matrix
 
     """
-        python ${prepDE} -i ${output}/expression -l ${rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+        python ${prepDE} -i ${output}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
     """
 }
