@@ -2,7 +2,7 @@
 
 // Params from config files (system-dependent)
 
-data=params.data
+data=params.data // data = btc seq, data2 = uploaded seq
 output=params.output
 aux=params.aux
 
@@ -208,13 +208,11 @@ process hisat2_stringtie {
 }
 
 ////////////////////////////////////////////////
-// ** - STRINGTIE table counts
+// ** - Stringtie table counts
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")
 process stringtie_counts_final {
-
-    echo true
 
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
@@ -232,3 +230,7 @@ process stringtie_counts_final {
 
     """
 }
+
+////////////////////////////////////////////////
+// ** - Post-alignment QC
+////////////////////////////////////////////////
