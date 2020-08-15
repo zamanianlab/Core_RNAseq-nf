@@ -214,6 +214,8 @@ process hisat2_stringtie {
 prepDE = file("${aux}/scripts/prepDE.py")
 process stringtie_counts_final {
 
+    echo true
+
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
     cpus small_core
@@ -226,7 +228,7 @@ process stringtie_counts_final {
         file ("transcript_count_matrix.csv") into transcript_count_matrix
 
     """
-        python ${prepDE} -i ${output}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+        python2 ${prepDE} -i ${output}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
     """
 }
