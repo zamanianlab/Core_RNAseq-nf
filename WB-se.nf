@@ -68,7 +68,7 @@ process trim_reads_se {
     fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
   """
 }
-trimmed_fqs.set { trimmed_reads_hisat;  trimmed_reads_qc}
+trimmed_fqs.into { trimmed_reads_hisat;  trimmed_reads_qc}
 
 ////////////////////////////////////////////////
 // ** - multiQC of trimmed fqs

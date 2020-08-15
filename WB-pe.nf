@@ -65,7 +65,7 @@ process trim_reads {
     fastp -i $forward -I $reverse -w ${small_core} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """
 }
-trimmed_fqs.set { trimmed_reads_hisat;  trimmed_reads_qc}
+trimmed_fqs.into { trimmed_reads_hisat;  trimmed_reads_qc}
 
 ////////////////////////////////////////////////
 // ** - multiQC of trimmed fqs
