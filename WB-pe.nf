@@ -251,11 +251,13 @@ process align_analysis {
     output:
         file("*_gene_intersects.bed") into bed_qc
 
+    script:
+
     """
       zcat geneset.gtf.gz > geneset.gtf
-      awk '{ if ($0 ~ "transcript_id") print $0; else print $0" transcript_id "";"; }' geneset.gtf | gtf2bed - > geneset.gtf.bed
-      cat geneset.gtf.bed | sed '/\tgene\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print $1, $2, $3, $4, $6}' > geneset.gene.bed
-      bedtools bamtobed -split -i $bam > ${id}.bed
+      awk '{ if (\$0 ~ "transcript_id") print \$0; else print \$0" transcript_id "";"; }' geneset.gtf | gtf2bed - > geneset.gtf.bed
+      cat geneset.gtf.bed | sed '/\tgene\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6}' > geneset.gene.bed
+      bedtools bamtobed -i ${bam} > ${id}.bed
       bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb > ${id}_gene_intersects.bed
 
     """
