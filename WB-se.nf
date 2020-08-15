@@ -68,7 +68,8 @@ process trim_reads_se {
     fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
   """
 }
-trimmed_fqs.into { trimmed_reads_hisat;  trimmed_reads_qc}
+trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_qc; geneset_qc }
+
 
 ////////////////////////////////////////////////
 // ** - multiQC of trimmed fqs
@@ -167,7 +168,7 @@ process build_hisat_index {
 
 }
 
-// Alignment and stringtie combined (handles both SE and PE)
+// Alignment and stringtie
 process hisat2_stringtie {
 
     publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
@@ -186,7 +187,7 @@ process hisat2_stringtie {
     output:
         file "${id}.hisat2_log.txt" into alignment_logs
         file("${id}/*") into stringtie_exp
-        file("${id}.bam") into bam_files
+        tuple id, file("${id}.bam") into bam_files
         file("${id}.bam.bai") into bam_indexes
 
     script:
@@ -206,6 +207,7 @@ process hisat2_stringtie {
         """
 
 }
+
 
 ////////////////////////////////////////////////
 // ** - Stringtie table counts
@@ -233,6 +235,13 @@ process stringtie_counts_final {
     """
 }
 
+
 ////////////////////////////////////////////////
 // ** - Post-alignment QC
 ////////////////////////////////////////////////
+
+process align_analysis {
+
+    cpus small_core
+
+}
