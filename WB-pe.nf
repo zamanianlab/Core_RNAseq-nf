@@ -241,7 +241,7 @@ process stringtie_counts_final {
 
 process align_analysis {
 
-    publishDir "${output}/${params.dir}/align_QC", mode: 'copy', pattern: '*_gene_intersects.bed'
+    publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_intersects.bed'
 
     cpus small_core
 
