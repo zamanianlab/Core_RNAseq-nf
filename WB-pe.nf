@@ -263,11 +263,11 @@ process align_analysis {
       cat geneset.gtf.bed | sed '/\tthree_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.3utr.bed
       bedtools bamtobed -i ${bam} > ${id}.bed
       bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb > ${id}_gene_intersects.bed
-      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb > ${id}_nogene_intersects.bed
-      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -wb ${id}_exon_intersects.bed
-      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -wb > ${id}_noexon_intersects.bed
-      bedtools intersect -a geneset.5utr.bed -b ${id}.bed -wa -wb ${id}_5utr_intersects.bed
-      bedtools intersect -a geneset.3utr.bed -b ${id}.bed -wa -wb ${id}_3utr_intersects.bed
+      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb -v > ${id}_nogene_intersects.bed
+      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -wb > ${id}_exon_intersects.bed
+      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -wb -v > ${id}_noexon_intersects.bed
+      bedtools intersect -a geneset.5utr.bed -b ${id}.bed -wa -wb > ${id}_5utr_intersects.bed
+      bedtools intersect -a geneset.3utr.bed -b ${id}.bed -wa -wb > ${id}_3utr_intersects.bed
 
     """
 }
