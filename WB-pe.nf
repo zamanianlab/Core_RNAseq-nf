@@ -39,7 +39,7 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
+Channel.fromFilePairs(data + "/${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
           .set { fqs }
 
 
@@ -226,7 +226,7 @@ process stringtie_counts_final {
         file ("transcript_count_matrix.csv") into transcript_count_matrix
 
     """
-        python2 ${prepDE} -i ${output}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+        python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
     """
 }
