@@ -250,7 +250,7 @@ process align_analysis {
         tuple val(id), file(bam), file(bai) from bam_files
 
     output:
-        file("*_intersects.bed") into bed_qc
+        file("*_QC.txt") into align_qc
 
     script:
 
