@@ -247,7 +247,7 @@ process align_analysis {
 
     input:
         file("geneset.gtf.gz") from geneset_qc
-        tuple val(id), file(bam) from bam_files
+        tuple val(id), file(bam), file(bai) from bam_files
 
     output:
         file("*_intersects.bed") into bed_qc
