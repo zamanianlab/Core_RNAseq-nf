@@ -137,7 +137,7 @@ process fetch_genome {
         wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz -O reference.fa.gz
     """
 }
-geneset_gtf.into { geneset_hisat; geneset_stringtie }
+geneset_gtf.into { geneset_hisat; geneset_stringtie; geneset_qc }
 reference_fa.into { reference_hisat }
 
 
