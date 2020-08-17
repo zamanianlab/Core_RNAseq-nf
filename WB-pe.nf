@@ -2,7 +2,7 @@
 
 // Params from config files (system-dependent)
 
-data=params.data2 // data = btc seq, data2 = uploaded seq
+data=params.data // data = btc seq, data2 = uploaded seq
 output=params.output
 aux=params.aux
 
