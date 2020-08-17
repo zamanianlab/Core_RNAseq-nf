@@ -264,11 +264,11 @@ process align_analysis {
       bedtools bamtobed -i ${bam} > ${id}.bed
 
       echo -n "total," >> ${bam}_QC.txt
-      samtools view -c ${bam}
+      samtools view -c ${bam} >> ${bam}_QC.txt
       echo -n "mapped," >> ${bam}_QC.txt
-      samtools view -F 0x4 -c ${bam}
+      samtools view -F 0x4 -c ${bam} >> ${bam}_QC.txt
       echo -n "unique," >> ${bam}_QC.txt
-      samtools view -F 0x4 -q 60 -c ${bam}
+      samtools view -F 0x4 -q 60 -c ${bam} >> ${bam}_QC.txt
 
       samtools view -L geneset.gene.bed -h ${bam} > tmp.sam
       echo -n "gene," >> ${bam}_QC.txt
