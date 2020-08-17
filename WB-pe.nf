@@ -185,7 +185,7 @@ process hisat2_stringtie {
     output:
         file "${id}.hisat2_log.txt" into alignment_logs
         file("${id}/*") into stringtie_exp
-        tuple id, file("${id}.bam") into bam_files
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
         file("${id}.bam.bai") into bam_indexes
 
     script:
@@ -262,12 +262,29 @@ process align_analysis {
       cat geneset.gtf.bed | sed '/\tfive_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.5utr.bed
       cat geneset.gtf.bed | sed '/\tthree_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.3utr.bed
       bedtools bamtobed -i ${bam} > ${id}.bed
-      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb > ${id}_gene_intersects.bed
-      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb -v > ${id}_nogene_intersects.bed
-      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -wb > ${id}_exon_intersects.bed
-      bedtools intersect -a geneset.exon.bed -b ${id}.bed -wa -wb -v > ${id}_noexon_intersects.bed
-      bedtools intersect -a geneset.5utr.bed -b ${id}.bed -wa -wb > ${id}_5utr_intersects.bed
-      bedtools intersect -a geneset.3utr.bed -b ${id}.bed -wa -wb > ${id}_3utr_intersects.bed
 
+      echo -n "total," >> ${bam}_QC.txt
+      samtools view -c ${bam}
+      echo -n "mapped," >> ${bam}_QC.txt
+      samtools view -F 0x4 -c ${bam}
+      echo -n "unique," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c ${bam}
+
+      samtools view -L geneset.gene.bed -h ${bam} > tmp.sam
+      echo -n "gene," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
+      samtools view -L geneset.exon.bed -h ${bam} > tmp.sam
+      echo -n "exon," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
+      samtools view -L geneset.5utr.bed -h ${bam} > tmp.sam
+      echo -n "5utr," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
+      samtools view -L geneset.3utr.bed -h ${bam} > tmp.sam
+      echo -n "3utr," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
     """
 }
