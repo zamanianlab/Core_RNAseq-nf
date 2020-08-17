@@ -243,25 +243,50 @@ process stringtie_counts_final {
 
 process align_analysis {
 
-    publishDir "${output}/${params.dir}/align_QC", mode: 'copy', pattern: '*_gene_intersects.bed'
+    publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
 
     cpus small_core
 
     input:
         file("geneset.gtf.gz") from geneset_qc
-        tuple val(id), file(bam) from bam_files
+        tuple val(id), file(bam), file(bai) from bam_files
 
     output:
-        file("*_gene_intersects.bed") into bed_qc
+        file("*_QC.txt") into align_qc
 
     script:
 
     """
       zcat geneset.gtf.gz > geneset.gtf
       awk '{ if (\$0 ~ "transcript_id") print \$0; else print \$0" transcript_id "";"; }' geneset.gtf | gtf2bed - > geneset.gtf.bed
-      cat geneset.gtf.bed | sed '/\tgene\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6}' > geneset.gene.bed
+      cat geneset.gtf.bed | sed '/\tgene\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.gene.bed
+      cat geneset.gtf.bed | sed '/\texon\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.exon.bed
+      cat geneset.gtf.bed | sed '/\tfive_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.5utr.bed
+      cat geneset.gtf.bed | sed '/\tthree_prime_utr\t/!d' | sed '/protein_coding/!d' | awk -v OFS='\t' '{print \$1, \$2, \$3, \$4, \$6, \$8}' > geneset.3utr.bed
       bedtools bamtobed -i ${bam} > ${id}.bed
-      bedtools intersect -a geneset.gene.bed -b ${id}.bed -wa -wb > ${id}_gene_intersects.bed
 
+      echo -n "total," >> ${bam}_QC.txt
+      samtools view -c ${bam} >> ${bam}_QC.txt
+      echo -n "mapped," >> ${bam}_QC.txt
+      samtools view -F 0x4 -c ${bam} >> ${bam}_QC.txt
+      echo -n "unique," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c ${bam} >> ${bam}_QC.txt
+
+      samtools view -L geneset.gene.bed -h ${bam} > tmp.sam
+      echo -n "gene," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
+      samtools view -L geneset.exon.bed -h ${bam} > tmp.sam
+      echo -n "exon," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
+      samtools view -L geneset.5utr.bed -h ${bam} > tmp.sam
+      echo -n "5utr," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
+      samtools view -L geneset.3utr.bed -h ${bam} > tmp.sam
+      echo -n "3utr," >> ${bam}_QC.txt
+      samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
+      rm tmp.sam
     """
 }
