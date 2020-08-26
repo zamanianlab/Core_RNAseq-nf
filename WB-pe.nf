@@ -62,7 +62,7 @@ process trim_reads {
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-    fastp -i $forward -I $reverse -w ${small_core} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
+    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """
 }
 trimmed_fqs.into { trimmed_reads_hisat;  trimmed_reads_qc}
@@ -161,7 +161,7 @@ process build_hisat_index {
         zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
         zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
         zcat reference.fa.gz > reference.fa
-        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+        hisat2-build -p ${task.cpus} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
     """
 
 }
@@ -193,15 +193,15 @@ process hisat2_stringtie {
 
 
         """
-          hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+          hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
           samtools view -bS ${id}.sam > ${id}.unsorted.bam
           rm *.sam
           samtools flagstat ${id}.unsorted.bam
-          samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -b ${id}.bam
           zcat geneset.gtf.gz > geneset.gtf
-          stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+          stringtie ${id}.bam -p ${task.cpus} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
           rm *.gtf
         """
 
