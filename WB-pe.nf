@@ -78,7 +78,6 @@ process fastqc {
     publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
 
     cpus small
-    tag { id }
 
     input:
     tuple val(id), file(forward), file(reverse) from trimmed_reads_qc
