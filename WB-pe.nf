@@ -1,17 +1,14 @@
 #!/usr/bin/env nextflow
 
 // Params from config files (system-dependent)
-
 data=params.data
 output=params.output
 aux=params.aux
 
-// Core counts
 big=params.big
 small=params.small
 
 // Global Params
-
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
