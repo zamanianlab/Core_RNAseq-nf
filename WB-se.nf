@@ -1,16 +1,14 @@
 #!/usr/bin/env nextflow
 
 // Params from config files (system-dependent)
-
-data=params.data // data = btc seq, data2 = uploaded seq
+data=params.data
 output=params.output
 aux=params.aux
 
-large_core=params.large_core
-small_core=params.small_core
+big=params.big
+small=params.small
 
 // Global Params
-
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
@@ -26,9 +24,6 @@ println "species: $params.species"
 params.prjn = null
 if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
-
-// flags for final stringtie_table_counts process (--stc)
-params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
@@ -51,7 +46,7 @@ process trim_reads_se {
 
   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.{json,html}'
 
-  cpus small_core
+  cpus small
   tag { id }
 
   input:
@@ -65,10 +60,10 @@ process trim_reads_se {
       id_out = id.replace('.fastq.gz', '')
 
   """
-    fastp -i $reads -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
+    fastp -i $reads -w ${task.cpus} -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
   """
 }
-trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_qc; geneset_qc }
+trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_qc }
 
 
 ////////////////////////////////////////////////
@@ -79,7 +74,7 @@ process fastqc {
 
     publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
 
-    cpus small_core
+    cpus small
     tag { id }
 
     input:
@@ -91,15 +86,14 @@ process fastqc {
     script:
 
     """
-      fastqc -q $reads
+      fastqc -q $reads -t ${task.cpus}
     """
 }
 
 process multiqc {
   publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
 
-  cpus small_core
-  tag { id }
+  cpus small
 
     input:
     file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
@@ -121,7 +115,7 @@ process multiqc {
 
 process fetch_genome {
 
-    cpus small_core
+    cpus small
 
     output:
         file("geneset.gtf.gz") into geneset_gtf
@@ -151,7 +145,7 @@ extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 process build_hisat_index {
 
-    cpus large_core
+    cpus big
 
     input:
         file("geneset.gtf.gz") from geneset_hisat
@@ -164,7 +158,7 @@ process build_hisat_index {
         zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
         zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
         zcat reference.fa.gz > reference.fa
-        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+        hisat2-build -p ${task.cpus} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
     """
 
 }
@@ -177,7 +171,7 @@ process hisat2_stringtie {
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
-    cpus large_core
+    cpus big
     tag { id }
 
     input:
@@ -195,7 +189,7 @@ process hisat2_stringtie {
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
         """
-          hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+          hisat2 -p ${task.cpus} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
           samtools view -bS ${id}.sam > ${id}.unsorted.bam
           rm *.sam
           samtools flagstat ${id}.unsorted.bam
@@ -203,37 +197,10 @@ process hisat2_stringtie {
           rm *.unsorted.bam
           samtools index -b ${id}.bam
           zcat geneset.gtf.gz > geneset.gtf
-          stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+          stringtie ${id}.bam -p ${task.cpus} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
           rm *.gtf
         """
 
-}
-
-
-////////////////////////////////////////////////
-// ** - Stringtie table counts
-////////////////////////////////////////////////
-
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts_final {
-
-    echo true
-
-    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
-
-    cpus small_core
-
-    when:
-      params.stc
-
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-        python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
 }
 
 
@@ -245,7 +212,7 @@ process align_analysis {
 
     publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
 
-    cpus small_core
+    cpus small
 
     input:
         file("geneset.gtf.gz") from geneset_qc
@@ -288,5 +255,32 @@ process align_analysis {
       echo -n "3utr," >> ${bam}_QC.txt
       samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
       rm tmp.sam
+    """
+}
+
+
+////////////////////////////////////////////////
+// ** - Stringtie table counts [collect hisat2 logs to confirm alignment is complete before generating counts]
+////////////////////////////////////////////////
+
+prepDE = file("${aux}/scripts/prepDE.py")
+process stringtie_counts_final {
+
+    echo true
+
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
+
+    cpus small_core
+
+    input:
+      file (hisat2_log) from alignment_logs.collect()
+
+    output:
+      file ("gene_count_matrix.csv") into gene_count_matrix
+      file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+      python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
     """
 }

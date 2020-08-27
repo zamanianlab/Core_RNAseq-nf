@@ -2,7 +2,7 @@
 
 // Params from config files (system-dependent)
 
-data=params.data // data = btc seq, data2 = uploaded seq
+data=params.data
 output=params.output
 aux=params.aux
 
@@ -27,9 +27,6 @@ println "species: $params.species"
 params.prjn = null
 if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
-
-// flags for final stringtie_table_counts process (--stc)
-//params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
@@ -66,7 +63,7 @@ process trim_reads {
     fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """
 }
-trimmed_fqs.into { trimmed_reads_hisat;  trimmed_reads_qc}
+trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_qc }
 
 
 ////////////////////////////////////////////////
@@ -78,6 +75,7 @@ process fastqc {
     publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
 
     cpus small
+    tag { id }
 
     input:
     tuple val(id), file(forward), file(reverse) from trimmed_reads_qc
@@ -88,7 +86,7 @@ process fastqc {
     script:
 
     """
-      fastqc -q $forward $reverse
+      fastqc -q $forward $reverse -t ${task.cpus}
     """
 }
 
@@ -96,7 +94,6 @@ process multiqc {
   publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
 
   cpus small
-  tag { id }
 
     input:
     file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
@@ -191,7 +188,6 @@ process hisat2_stringtie {
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
-
         """
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
           samtools view -bS ${id}.sam > ${id}.unsorted.bam
@@ -278,9 +274,6 @@ process stringtie_counts_final {
 
     input:
       file (hisat2_log) from alignment_logs.collect()
-
-//    when:
-//      params.stc
 
     output:
       file ("gene_count_matrix.csv") into gene_count_matrix
