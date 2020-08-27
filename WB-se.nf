@@ -193,7 +193,7 @@ process hisat2_stringtie {
           samtools view -bS ${id}.sam > ${id}.unsorted.bam
           rm *.sam
           samtools flagstat ${id}.unsorted.bam
-          samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -b ${id}.bam
           zcat geneset.gtf.gz > geneset.gtf
@@ -270,7 +270,7 @@ process stringtie_counts_final {
 
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
-    cpus small_core
+    cpus small
 
     input:
       file (hisat2_log) from alignment_logs.collect()
