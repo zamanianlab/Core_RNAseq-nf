@@ -6,8 +6,9 @@ data=params.data // data = btc seq, data2 = uploaded seq
 output=params.output
 aux=params.aux
 
-large_core=params.large_core
-small_core=params.small_core
+// Core counts
+big=params.big
+small=params.small
 
 // Global Params
 
@@ -28,7 +29,7 @@ if( !params.prjn ) error "Missing WB prjn parameter"
 println "prjn: $params.prjn"
 
 // flags for final stringtie_table_counts process (--stc)
-params.stc = false
+//params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
@@ -51,7 +52,7 @@ process trim_reads {
 
   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.{json,html}'
 
-  cpus small_core
+  cpus small
   tag { id }
 
   input:
@@ -76,7 +77,7 @@ process fastqc {
 
     publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
 
-    cpus small_core
+    cpus small
     tag { id }
 
     input:
@@ -95,7 +96,7 @@ process fastqc {
 process multiqc {
   publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
 
-  cpus small_core
+  cpus small
   tag { id }
 
     input:
@@ -118,7 +119,7 @@ process multiqc {
 
 process fetch_genome {
 
-    cpus small_core
+    cpus small
 
     output:
         file("geneset.gtf.gz") into geneset_gtf
@@ -148,7 +149,7 @@ extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 process build_hisat_index {
 
-    cpus large_core
+    cpus big
 
     input:
         file("geneset.gtf.gz") from geneset_hisat
@@ -174,7 +175,7 @@ process hisat2_stringtie {
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
-    cpus large_core
+    cpus big
     tag { id }
 
     input:
@@ -209,33 +210,6 @@ process hisat2_stringtie {
 
 
 ////////////////////////////////////////////////
-// ** - Stringtie table counts
-////////////////////////////////////////////////
-
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts_final {
-
-    echo true
-
-    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
-
-    cpus small_core
-
-    when:
-      params.stc
-
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-        python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
-}
-
-
-////////////////////////////////////////////////
 // ** - Post-alignment QC
 ////////////////////////////////////////////////
 
@@ -243,7 +217,7 @@ process align_analysis {
 
     publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
 
-    cpus small_core
+    cpus small
 
     input:
         file("geneset.gtf.gz") from geneset_qc
@@ -286,5 +260,35 @@ process align_analysis {
       echo -n "3utr," >> ${bam}_QC.txt
       samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
       rm tmp.sam
+    """
+}
+
+
+////////////////////////////////////////////////
+// ** - Stringtie table counts [collect hisat2 logs to confirm alignment is complete before generating counts]
+////////////////////////////////////////////////
+
+prepDE = file("${aux}/scripts/prepDE.py")
+process stringtie_counts_final {
+
+    echo true
+
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
+
+    cpus small
+
+    input:
+      file (hisat2_log) from alignment_logs.collect()
+
+//    when:
+//      params.stc
+
+    output:
+      file ("gene_count_matrix.csv") into gene_count_matrix
+      file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+      python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
     """
 }
