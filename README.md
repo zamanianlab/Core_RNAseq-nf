@@ -29,4 +29,4 @@ nf RNA-seq pipelines for Wormbase Parasite and Vectorbase species
 ### Example of VB pipeline command
 - VB pipelines use pre-indexed genomes.
 
-`nextflow run Ae-pe.nf [nextflow options] --dir [fastq dir] --rlen "100"`
+`nextflow run -resume Ae-pe.nf [nextflow options] --dir [fastq dir] --rlen "100"`
