@@ -34,7 +34,7 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "/${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
+Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
           .set { fqs }
 
 

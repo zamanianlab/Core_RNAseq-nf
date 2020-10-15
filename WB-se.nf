@@ -34,7 +34,7 @@ println "rlen: $params.rlen"
 // ** - Pull in fq files
 ////////////////////////////////////////////////
 
-fqs = Channel.fromPath(data + "/${params.dir}/*.f[a-z]*q.gz")
+fqs = Channel.fromPath(input + "/${params.dir}/*.f[a-z]*q.gz")
                         .map { n -> [ n.getName(), n ] }
 
 
