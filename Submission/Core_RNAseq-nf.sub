@@ -1,0 +1,34 @@
+# Core_RNAseq-nf.sub
+# Submit scripts (.sub/.sh) in /home/username/; Data in /staging/username/data/$(data)
+# Run: condor_submit Core_RNAseq-nf.sub data=191211_AHMMC5DMXX script=Core_RNAseq-nf.sh
+
+# load docker image and request nodes with access to staging directory
+universe = docker
+docker_image = zamanianlab/chtc-rnaseq:latest
+Accounting_Group = PathobiologicalSciences_Zamanian
+
+# require execute servers that have large data staging
+Requirements = (Target.HasCHTCStaging == true)
+
+# executable (/home/username/) and arguments
+executable = $(script)
+arguments = $(data)
+
+# log, error, and st output files
+log = $(data)_$(Cluster)_$(Process).log
+error = $(data)_$(Cluster)_$(Process).err
+output = $(data)_$(Cluster)_$(Process).out
+
+# transfer files in/out of /home/username/...
+#transfer_input_files =
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+# memory, disk and CPU requests
+request_cpus = 80
+request_memory = 500GB
+request_disk = 1500GB
+
+# submit 1 job
+queue 1
+### END
