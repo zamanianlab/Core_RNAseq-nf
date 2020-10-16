@@ -175,8 +175,8 @@ process hisat2_stringtie {
 
     publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
     publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
-    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus big
     tag { id }
