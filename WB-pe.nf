@@ -29,6 +29,9 @@ params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
+// flag for fastqc and multiqc (--qc)
+params.qc = false
+
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files
@@ -74,6 +77,9 @@ process fastqc {
     cpus small
     tag { id }
 
+    when:
+      params.qc
+
     input:
     tuple val(id), file(forward), file(reverse) from trimmed_reads_qc
 
@@ -88,9 +94,13 @@ process fastqc {
 }
 
 process multiqc {
-  publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
 
-  cpus small
+    publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
+
+    cpus small
+
+    when:
+      params.qc
 
     input:
     file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
@@ -170,6 +180,7 @@ process hisat2_stringtie {
 
     cpus big
     tag { id }
+    maxForks 4
 
     input:
         tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
@@ -210,6 +221,9 @@ process align_analysis {
     publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
 
     cpus small
+
+    when:
+      params.qc
 
     input:
         file("geneset.gtf.gz") from geneset_qc
