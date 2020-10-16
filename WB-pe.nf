@@ -175,8 +175,8 @@ process hisat2_stringtie {
 
     publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
     publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus big
     tag { id }
@@ -198,9 +198,8 @@ process hisat2_stringtie {
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
         """
-          hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt
-          samtools view -@ ${task.cpus} -bS ${id}.sam > ${id}.unsorted.bam
-          rm *.sam
+          hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
+             samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
           samtools flagstat ${id}.unsorted.bam
           samtools sort -@ ${task.cpus} -m 4G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
