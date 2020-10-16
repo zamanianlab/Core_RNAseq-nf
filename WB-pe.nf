@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 // Params from config files (system-dependent)
-data=params.data
+input=params.input
 output=params.output
 aux=params.aux
 
