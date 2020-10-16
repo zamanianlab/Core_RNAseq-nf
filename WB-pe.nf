@@ -197,11 +197,10 @@ process hisat2_stringtie {
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
         """
-          parallel -j ${task.cpus} hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt
-          samtools view -bS ${id}.sam > ${id}.unsorted.bam
-          rm *.sam
+          parallel -j ${task.cpus} hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse}  -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
+           samtools view -bhS > ${id}.unsorted.bam
           samtools flagstat ${id}.unsorted.bam
-          samtools sort -@ ${task.cpus} -o ${id}.bam ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -m 4G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -b ${id}.bam
           zcat geneset.gtf.gz > geneset.gtf
