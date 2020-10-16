@@ -199,7 +199,7 @@ process hisat2_stringtie {
 
         """
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse}  -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
-           samtools view -bhS > ${id}.unsorted.bam
+           samtools view -bS > ${id}.unsorted.bam
           samtools flagstat ${id}.unsorted.bam
           samtools sort -@ ${task.cpus} -m 4G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
