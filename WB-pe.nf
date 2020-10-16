@@ -202,7 +202,7 @@ process hisat2_stringtie {
           samtools flagstat ${id}.unsorted.bam
           samtools sort -@ ${task.cpus} -m 4G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
-          samtools index -b ${id}.bam
+          samtools index -@ ${task.cpus} -b ${id}.bam
           zcat geneset.gtf.gz > geneset.gtf
           stringtie ${id}.bam -p ${task.cpus} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
           rm *.gtf
