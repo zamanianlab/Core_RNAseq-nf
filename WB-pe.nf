@@ -181,7 +181,7 @@ process hisat2_stringtie {
     cpus big
     tag { id }
     maxForks 4
-    memory '32 GB'
+    //memory '32 GB'
 
     input:
         tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
@@ -201,7 +201,7 @@ process hisat2_stringtie {
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
              samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
           samtools flagstat ${id}.unsorted.bam
-          samtools sort -@ ${task.cpus} -m 4G -o ${id}.bam ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           zcat geneset.gtf.gz > geneset.gtf
