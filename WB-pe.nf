@@ -269,14 +269,14 @@ process stringtie {
 
 // Stringtie table counts [collect stringtie outputs to confirm stringtie is complete before generating counts]
 prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts_final {
+process stringtie_counts {
 
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
     cpus small
 
     input:
-      file("${id}/*") from stringtie_exp.collect()
+      file("${id}/*") from stringtie_exp
 
     output:
       file ("gene_count_matrix.csv") into gene_count_matrix
