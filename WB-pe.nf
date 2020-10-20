@@ -211,11 +211,11 @@ process star_align {
           STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index\
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
             --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}\
-            --quantMode GeneCounts --outSAMattrRGline ID:${id} \
-          samtools flagstat ${id}.Aligned.out.bam > ${id}.flagstat.txt
+            --quantMode GeneCounts --outSAMattrRGline ID:${id}
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
+          samtools flagstat ${id}.bam > ${id}.flagstat.txt
         """
 // remove -m16G
 }
@@ -281,10 +281,10 @@ process hisat_align {
         """
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
              samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
-          samtools flagstat ${id}.unsorted.bam > ${id}.flagstat.txt
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
+          samtools flagstat ${id}.bam > ${id}.flagstat.txt
         """
 
 }
