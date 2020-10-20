@@ -147,18 +147,16 @@ reference_fa.into { reference_hisat; reference_star }
 ////////////////////////////////////////////////
 
 // Build STAR Index using reference genome and annotation file
-
-process build_star_index {
+process star_index {
 
     cpus big
-    //memory '256 GB'
 
     input:
         file("geneset.gtf.gz") from geneset_star
         file("reference.fa.gz") from reference_star
 
     output:
-        file("STAR_index/*") into temp
+        file("STAR_index/*") into star_indices
 
     script:
         overhang = params.rlen - 1
@@ -176,6 +174,8 @@ process build_star_index {
 
 }
 
+
+
 // STAR --runMode alignReads --outSAMtype BAM Unsorted --readFilesCommand zcat --genomeDir /path/to/STAR/genome/folder --outFileNamePrefix {sample name}  --readFilesIn  /path/to/R1 /path/to/R2
 
 ////////////////////////////////////////////////
@@ -186,7 +186,7 @@ process build_star_index {
 extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
 extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
-process build_hisat_index {
+process hisat_index {
 
     cpus big
     //memory '256 GB'
@@ -207,29 +207,24 @@ process build_hisat_index {
 
 }
 
-// Alignment and stringtie
-process hisat2_stringtie {
+// HiSat2 alignment
+process hisat_align {
 
-    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
     publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
-    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus big
     tag { id }
     maxForks 4
-    //memory '32 GB'
 
     input:
         tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
-        file("geneset.gtf.gz") from geneset_stringtie
         file hs2_indices from hs2_indices.first()
 
     output:
         file "${id}.hisat2_log.txt" into alignment_logs
-        file("${id}/*") into stringtie_exp
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
-        file("${id}.bam.bai") into bam_indexes
 
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
@@ -241,6 +236,30 @@ process hisat2_stringtie {
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
+        """
+
+}
+bam_files.into {bam_files_stringtie; bam_files_htseq}
+
+// Stringtie
+process stringtie {
+
+    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
+
+    cpus small
+    tag { id }
+    maxForks 4
+
+    input:
+        file("geneset.gtf.gz") from geneset_stringtie
+        tuple val(id), ("${id}.bam"), file("${id}.bam.bai") from bam_files_stringtie
+
+    output:
+        file("${id}/*") into stringtie_exp
+
+    script:
+
+        """
           zcat geneset.gtf.gz > geneset.gtf
           stringtie ${id}.bam -p ${task.cpus} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
           rm *.gtf
@@ -248,18 +267,18 @@ process hisat2_stringtie {
 
 }
 
-// Stringtie table counts [collect hisat2 logs to confirm alignment is complete before generating counts]
+
+// Stringtie table counts [collect stringtie outputs to confirm stringtie is complete before generating counts]
 prepDE = file("${aux}/scripts/prepDE.py")
 process stringtie_counts_final {
-
-    echo true
 
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
     cpus small
 
     input:
-      file (hisat2_log) from alignment_logs.collect()
+      tuple val(id), ("${id}.bam"), file("${id}.bam.bai") from bam_files_stringtie.collect()
+      file("${id}/*") from stringtie_exp
 
     output:
       file ("gene_count_matrix.csv") into gene_count_matrix
