@@ -220,28 +220,6 @@ process star_align {
 // remove -m16G
 }
 
-// STAR table counts [collect tab outputs to confirm star is complete before generating counts]
-process star_counts {
-
-    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
-
-    cpus small
-
-    when:
-      params.hisat
-
-    input:
-      val(id) from stringtie_exp.toSortedList()
-
-    output:
-      file ("gene_count_matrix.csv") into gene_count_matrix
-      file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-      python2 ${prepDE} -i ${output}/${params.dir}/hisat -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
-}
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
