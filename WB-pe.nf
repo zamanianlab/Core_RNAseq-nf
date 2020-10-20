@@ -33,6 +33,10 @@ params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
+// flag for STAR (--star) or hisat (--hisat)
+params.star = false
+params.hisat = false
+
 // flag for fastqc, multiqc, and bam qc proceses (--qc)
 params.qc = false
 
@@ -156,7 +160,7 @@ process star_index {
     cpus big
 
     when:
-      params.aligner = "star"
+      params.star
 
     input:
         file("geneset.gtf.gz") from geneset_star
@@ -193,7 +197,7 @@ process star_align {
     maxForks 4
 
     when:
-      params.aligner = "star"
+      params.star
 
     input:
         file("STAR_index/*") from star_indices
@@ -233,7 +237,7 @@ process hisat_index {
     cpus big
 
     when:
-      params.aligner = "hisat"
+      params.hisat
 
     input:
         file("geneset.gtf.gz") from geneset_hisat
@@ -264,7 +268,7 @@ process hisat_align {
     maxForks 4
 
     when:
-      params.aligner = "hisat"
+      params.hisat
 
     input:
         tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
@@ -299,7 +303,7 @@ process stringtie {
     maxForks 4
 
     when:
-      params.aligner = "hisat"
+      params.hisat
 
     input:
         file("geneset.gtf.gz") from geneset_stringtie
@@ -328,8 +332,8 @@ process stringtie_counts {
     cpus small
 
     when:
-      params.aligner = "hisat"
-      
+      params.hisat
+
     input:
       val(id) from stringtie_exp.toSortedList()
 
