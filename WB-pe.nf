@@ -189,7 +189,6 @@ extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 process hisat_index {
 
     cpus big
-    //memory '256 GB'
 
     input:
         file("geneset.gtf.gz") from geneset_hisat
