@@ -192,8 +192,8 @@ process star_align {
     output:
 //        file "${id}.hisat2_log.txt" into alignment_logs
 //        file("${id}/*") into stringtie_exp
-        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
-        file("${id}.bam.bai") into bam_indexes
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
+        file("${id}.bam.bai") into bam_indexes_star
 
     script:
 
