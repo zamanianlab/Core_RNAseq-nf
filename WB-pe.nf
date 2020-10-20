@@ -63,7 +63,7 @@ process trim_reads {
     fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """
 }
-trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_qc }
+trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_star; trimmed_reads_qc }
 
 
 ////////////////////////////////////////////////
@@ -138,21 +138,52 @@ process fetch_genome {
         wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz -O reference.fa.gz
     """
 }
-geneset_gtf.into { geneset_hisat; geneset_stringtie; geneset_qc }
+geneset_gtf.into { geneset_hisat; geneset_stringtie; geneset_qc; geneset_star; }
 reference_fa.into { reference_hisat }
+
+
+////////////////////////////////////////////////
+// ** - STAR pipeline
+////////////////////////////////////////////////
+
+// Build STAR Index using reference genome and annotation file
+
+process build_star_index {
+
+    cpus big
+    //memory '256 GB'
+
+    input:
+        file("geneset.gtf.gz") from geneset_star
+        file("reference.fa.gz") from reference_star
+
+    output:
+        file("STAR_index/*") into hs2_indices
+
+    """
+        zcat reference.fa.gz > reference.fa
+        zcat reference.gtf.gz > reference.gtf
+        mkdir STAR_index
+        STAR --runMode genomeGenerate --runThreadN ${task.cpus} --genomeDir STAR_index \
+          --genomeFastaFiles reference.fa \
+          --sjdbGTFfile reference.gtf
+    """
+
+}
 
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
 ////////////////////////////////////////////////
 
-// Create HiSat2 Index using reference genome and annotation file
+// Build HiSat2 Index using reference genome and annotation file
 extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
 extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 process build_hisat_index {
 
     cpus big
+    //memory '256 GB'
 
     input:
         file("geneset.gtf.gz") from geneset_hisat
@@ -211,6 +242,28 @@ process hisat2_stringtie {
 
 }
 
+// Stringtie table counts [collect hisat2 logs to confirm alignment is complete before generating counts]
+prepDE = file("${aux}/scripts/prepDE.py")
+process stringtie_counts_final {
+
+    echo true
+
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
+
+    cpus small
+
+    input:
+      file (hisat2_log) from alignment_logs.collect()
+
+    output:
+      file ("gene_count_matrix.csv") into gene_count_matrix
+      file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+      python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
 
 ////////////////////////////////////////////////
 // ** - Post-alignment QC
@@ -265,32 +318,5 @@ process align_analysis {
       echo -n "3utr," >> ${bam}_QC.txt
       samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
       rm tmp.sam
-    """
-}
-
-
-////////////////////////////////////////////////
-// ** - Stringtie table counts [collect hisat2 logs to confirm alignment is complete before generating counts]
-////////////////////////////////////////////////
-
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts_final {
-
-    echo true
-
-    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
-
-    cpus small
-
-    input:
-      file (hisat2_log) from alignment_logs.collect()
-
-    output:
-      file ("gene_count_matrix.csv") into gene_count_matrix
-      file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-      python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
     """
 }
