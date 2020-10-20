@@ -216,6 +216,7 @@ process star_align {
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           samtools flagstat ${id}.bam > ${id}.flagstat.txt
+          cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.out.tab
         """
 // remove -m16G
 }
