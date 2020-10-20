@@ -190,13 +190,12 @@ process star_align {
         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
-        file "${id}.hisat2_log.txt" into alignment_logs
-        file("${id}/*") into stringtie_exp
+//        file "${id}.hisat2_log.txt" into alignment_logs
+//        file("${id}/*") into stringtie_exp
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
         file("${id}.bam.bai") into bam_indexes
 
     script:
-        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
         """
           STAR --runThreadN ${task.cpus} --runMode alignReads --outSAMtype BAM Unsorted \
