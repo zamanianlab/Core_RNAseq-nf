@@ -13,6 +13,10 @@ params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
 
+params.aligner = null
+if( !params.aligner ) error "Missing aligner (select `star` or `hisat`)"
+println "aligner: $params.aligner"
+
 params.release = null
 if( !params.release ) error "Missing WB release parameter"
 println "release: $params.release"
@@ -29,7 +33,7 @@ params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
-// flag for fastqc and multiqc (--qc)
+// flag for fastqc, multiqc, and bam qc proceses (--qc)
 params.qc = false
 
 
@@ -151,6 +155,9 @@ process star_index {
 
     cpus big
 
+    when:
+      params.aligner = "star"
+
     input:
         file("geneset.gtf.gz") from geneset_star
         file("reference.fa.gz") from reference_star
@@ -184,6 +191,9 @@ process star_align {
     cpus big
     tag { id }
     maxForks 4
+
+    when:
+      params.aligner = "star"
 
     input:
         file("STAR_index/*") from star_indices
@@ -222,6 +232,9 @@ process hisat_index {
 
     cpus big
 
+    when:
+      params.aligner = "hisat"
+
     input:
         file("geneset.gtf.gz") from geneset_hisat
         file("reference.fa.gz") from reference_hisat
@@ -249,6 +262,9 @@ process hisat_align {
     cpus big
     tag { id }
     maxForks 4
+
+    when:
+      params.aligner = "hisat"
 
     input:
         tuple val(id), file(forward), file(reverse) from trimmed_reads_hisat
@@ -282,6 +298,9 @@ process stringtie {
     tag { id }
     maxForks 4
 
+    when:
+      params.aligner = "hisat"
+
     input:
         file("geneset.gtf.gz") from geneset_stringtie
         tuple val(id), ("${id}.bam"), file("${id}.bam.bai") from bam_files_stringtie
@@ -308,6 +327,9 @@ process stringtie_counts {
 
     cpus small
 
+    when:
+      params.aligner = "hisat"
+      
     input:
       val(id) from stringtie_exp.toSortedList()
 
