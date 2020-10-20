@@ -185,7 +185,7 @@ process star_align {
 
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
-    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.out.tab'
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.tab'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -216,7 +216,7 @@ process star_align {
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           samtools flagstat ${id}.bam > ${id}.flagstat.txt
-          cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.out.tab
+          cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.tab
         """
 // remove -m16G
 }
