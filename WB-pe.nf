@@ -176,8 +176,7 @@ process star_index {
 
 process star_align {
 
-    //publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
-    //publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -190,8 +189,8 @@ process star_align {
         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
+        file("${id}.Log.final.out") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
-        file("${id}.bam.bai") into bam_indexes_star
 
     script:
 
@@ -241,7 +240,7 @@ process hisat_index {
 // HiSat2 alignment
 process hisat_align {
 
-    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.hisat2_log.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -254,8 +253,8 @@ process hisat_align {
         file hs2_indices from hs2_indices.first()
 
     output:
-        file "${id}.hisat2_log.txt" into alignment_logs
-        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
+        file "${id}.hisat2_log.txt" into alignment_logs_hisat
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_hisat
 
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
@@ -270,12 +269,12 @@ process hisat_align {
         """
 
 }
-bam_files.into {bam_files_stringtie; bam_files_htseq; bam_files_qc}
+bam_files_hisat.into {bam_files_stringtie; bam_files_htseq; bam_files_qc}
 
 // Stringtie
 process stringtie {
 
-    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '**/*'
 
     cpus small
     tag { id }
@@ -315,7 +314,7 @@ process stringtie_counts {
       file ("transcript_count_matrix.csv") into transcript_count_matrix
 
     """
-      python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+      python2 ${prepDE} -i ${output}/${params.dir}/hisat -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
     """
 }
