@@ -276,7 +276,7 @@ process stringtie_counts {
     cpus small
 
     input:
-      file("${id}/*") from stringtie_exp
+      val(id) from stringtie_exp.toSortedList()
 
     output:
       file ("gene_count_matrix.csv") into gene_count_matrix
