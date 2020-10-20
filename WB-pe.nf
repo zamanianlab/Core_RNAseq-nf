@@ -209,7 +209,7 @@ process star_align {
           STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index\
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
             --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}\
-            --outSAMattrRGline ID:${id} \
+            --quantMode GeneCounts --outSAMattrRGline ID:${id} \
           samtools flagstat ${id}.Aligned.out.bam > ${id}.flagstat.txt
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
