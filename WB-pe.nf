@@ -177,7 +177,7 @@ process star_index {
 process star_align {
 
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
-    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*._flagstat.txt'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -200,7 +200,7 @@ process star_align {
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
             --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}\
             --outSAMattrRGline ID:${id} \
-          samtools flagstat ${id}.Aligned.out.bam > ${id}_flagstat.txt
+          samtools flagstat ${id}.Aligned.out.bam > ${id}.flagstat.txt
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
@@ -242,7 +242,7 @@ process hisat_index {
 process hisat_align {
 
     publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*._flagstat.txt'
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -264,7 +264,7 @@ process hisat_align {
         """
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
              samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
-          samtools flagstat ${id}.unsorted.bam > ${id}_flagstat.txt
+          samtools flagstat ${id}.unsorted.bam > ${id}.flagstat.txt
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
