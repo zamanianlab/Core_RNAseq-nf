@@ -158,7 +158,7 @@ process build_star_index {
         file("reference.fa.gz") from reference_star
 
     output:
-        file("STAR_index/*") into hs2_indices
+        file("STAR_index/*") into temp
 
     """
         zcat reference.fa.gz > reference.fa
