@@ -177,6 +177,7 @@ process star_index {
 process star_align {
 
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flag_stat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -189,16 +190,17 @@ process star_align {
         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
-        file("${id}.Log.final.out") into alignment_logs_star
+        tuple file("${id}.Log.final.out"),file("${id}_flagstat.txt") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
 
     script:
 
         """
-          STAR --runThreadN ${task.cpus} --runMode alignReads --outSAMtype BAM Unsorted \
-            --readFilesCommand zcat --genomeDir STAR_index \
-            --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}
-          samtools flagstat ${id}.Aligned.out.bam
+          STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index\
+            --outSAMtype BAM Unsorted --readFilesCommand zcat \
+            --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}\
+            --outSAMattrRGline ID:${id} \
+          samtools flagstat ${id}.Aligned.out.bam > ${id}_flagstat.txt
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
@@ -207,7 +209,6 @@ process star_align {
 }
 
 
-// STAR --runMode alignReads --outSAMtype BAM Unsorted --readFilesCommand zcat --genomeDir /path/to/STAR/genome/folder --outFileNamePrefix {sample name}  --readFilesIn  /path/to/R1 /path/to/R2
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
@@ -241,6 +242,7 @@ process hisat_index {
 process hisat_align {
 
     publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.flag_stat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -253,7 +255,7 @@ process hisat_align {
         file hs2_indices from hs2_indices.first()
 
     output:
-        file "${id}.hisat2_log.txt" into alignment_logs_hisat
+        tuple file("${id}.hisat2_log.txt"),file("${id}_flagstat.txt") into alignment_logs_hisat
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_hisat
 
     script:
@@ -262,7 +264,7 @@ process hisat_align {
         """
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
              samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
-          samtools flagstat ${id}.unsorted.bam
+          samtools flagstat ${id}.unsorted.bam > ${id}_flagstat.txt
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
