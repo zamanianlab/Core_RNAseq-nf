@@ -164,9 +164,11 @@ process build_star_index {
         zcat reference.fa.gz > reference.fa
         zcat geneset.gtf.gz > geneset.gtf
         mkdir STAR_index
-        STAR --runMode genomeGenerate --runThreadN ${task.cpus} --genomeDir STAR_index \
+        overhang = ${params.rlen} - 1
+        STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
-          --sjdbGTFfile reference.gtf
+          --sjdbGTFfile geneset.gtf \
+          --sjdbOverhang overhang
     """
 
 }
