@@ -168,7 +168,7 @@ process build_star_index {
         STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
           --sjdbGTFfile geneset.gtf \
-          --sjdbOverhang $overhang
+          --sjdbOverhang ${overhang}
     """
 
 }
