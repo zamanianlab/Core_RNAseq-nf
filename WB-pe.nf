@@ -160,11 +160,14 @@ process build_star_index {
     output:
         file("STAR_index/*") into temp
 
+    script:
+        overhang = params.rlen - 1
+
     """
         zcat reference.fa.gz > reference.fa
         zcat geneset.gtf.gz > geneset.gtf
         mkdir STAR_index
-        overhang = ${params.rlen} - 1
+
         STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
           --sjdbGTFfile geneset.gtf \
