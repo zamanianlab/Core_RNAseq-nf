@@ -162,7 +162,7 @@ process build_star_index {
 
     """
         zcat reference.fa.gz > reference.fa
-        zcat reference.gtf.gz > reference.gtf
+        zcat geneset.gtf.gz > geneset.gtf
         mkdir STAR_index
         STAR --runMode genomeGenerate --runThreadN ${task.cpus} --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
