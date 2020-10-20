@@ -190,8 +190,6 @@ process star_align {
         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
-//        file "${id}.hisat2_log.txt" into alignment_logs
-//        file("${id}/*") into stringtie_exp
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
         file("${id}.bam.bai") into bam_indexes_star
 
