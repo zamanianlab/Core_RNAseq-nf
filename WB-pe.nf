@@ -168,11 +168,12 @@ process build_star_index {
         STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
           --sjdbGTFfile geneset.gtf \
-          --sjdbOverhang overhang
+          --sjdbOverhang $overhang
     """
 
 }
 
+// STAR --runMode alignReads --outSAMtype BAM Unsorted --readFilesCommand zcat --genomeDir /path/to/STAR/genome/folder --outFileNamePrefix {sample name}  --readFilesIn  /path/to/R1 /path/to/R2
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
