@@ -185,6 +185,7 @@ process star_align {
 
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.out.tab'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -202,6 +203,7 @@ process star_align {
     output:
         tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
+        tuple file("${id}.ReadsPerGene.out.tab") into star_counts
 
     script:
 
@@ -218,7 +220,28 @@ process star_align {
 // remove -m16G
 }
 
+// STAR table counts [collect tab outputs to confirm star is complete before generating counts]
+process star_counts {
 
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
+
+    cpus small
+
+    when:
+      params.hisat
+
+    input:
+      val(id) from stringtie_exp.toSortedList()
+
+    output:
+      file ("gene_count_matrix.csv") into gene_count_matrix
+      file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+      python2 ${prepDE} -i ${output}/${params.dir}/hisat -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
@@ -290,13 +313,12 @@ process hisat_align {
 bam_files_hisat.into {bam_files_stringtie; bam_files_htseq; bam_files_qc}
 
 // Stringtie
-process stringtie {
+process hisat_stringtie {
 
     publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '**/*'
 
     cpus small
     tag { id }
-    maxForks 4
 
     when:
       params.hisat
@@ -318,10 +340,9 @@ process stringtie {
 
 }
 
-
 // Stringtie table counts [collect stringtie outputs to confirm stringtie is complete before generating counts]
 prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts {
+process hisat_stringtie_counts {
 
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
 
