@@ -203,7 +203,7 @@ process star_align {
     output:
         tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
-        tuple file("${id}.ReadsPerGene.out.tab") into star_counts
+        file("${id}.ReadsPerGene.out.tab") into star_counts
 
     script:
 
