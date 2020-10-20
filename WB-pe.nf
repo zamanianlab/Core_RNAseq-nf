@@ -177,7 +177,7 @@ process star_index {
 process star_align {
 
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
-    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flag_stat.txt'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*._flagstat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -190,7 +190,7 @@ process star_align {
         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
-        tuple file("${id}.Log.final.out"),file("${id}_flagstat.txt") into alignment_logs_star
+        tuple file("${id}.Log.final.out"), file("${id}_flagstat.txt") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
 
     script:
@@ -242,7 +242,7 @@ process hisat_index {
 process hisat_align {
 
     publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.flag_stat.txt'
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*._flagstat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -325,7 +325,7 @@ process stringtie_counts {
 // ** - Post-alignment QC
 ////////////////////////////////////////////////
 
-process align_analysis {
+process bam_qc {
 
     publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
 
