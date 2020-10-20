@@ -198,13 +198,13 @@ process star_align {
         """
           STAR --runThreadN ${task.cpus} --runMode alignReads --outSAMtype BAM Unsorted \
             --readFilesCommand zcat --genomeDir STAR_index \
-            --outFileNamePrefix ${id} --readFilesIn  ${forward} ${reverse}
+            --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}
           samtools flagstat ${id}.Aligned.out.bam
           samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
         """
-
+// remove -m16G
 }
 
 
