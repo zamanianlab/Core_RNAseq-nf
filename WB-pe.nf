@@ -277,8 +277,7 @@ process stringtie_counts_final {
     cpus small
 
     input:
-      tuple val(id), ("${id}.bam"), file("${id}.bam.bai") from bam_files_stringtie.collect()
-      file("${id}/*") from stringtie_exp
+      file("${id}/*") from stringtie_exp.collect()
 
     output:
       file ("gene_count_matrix.csv") into gene_count_matrix
