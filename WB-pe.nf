@@ -174,6 +174,41 @@ process star_index {
 
 }
 
+process star_align {
+
+    //publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
+    //publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+
+    cpus big
+    tag { id }
+    maxForks 4
+
+    input:
+        file("STAR_index/*") from star_indices
+        tuple val(id), file(forward), file(reverse) from trimmed_reads_star
+
+    output:
+        file "${id}.hisat2_log.txt" into alignment_logs
+        file("${id}/*") into stringtie_exp
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
+        file("${id}.bam.bai") into bam_indexes
+
+    script:
+        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+
+        """
+          STAR --runThreadN ${task.cpus} --runMode alignReads --outSAMtype BAM Unsorted \
+            --readFilesCommand zcat --genomeDir STAR_index \
+            --outFileNamePrefix ${id}.unsorted --readFilesIn  ${forward} ${reverse}
+          samtools flagstat ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
+          rm *.unsorted.bam
+          samtools index -@ ${task.cpus} -b ${id}.bam
+        """
+
+}
 
 
 // STAR --runMode alignReads --outSAMtype BAM Unsorted --readFilesCommand zcat --genomeDir /path/to/STAR/genome/folder --outFileNamePrefix {sample name}  --readFilesIn  /path/to/R1 /path/to/R2
