@@ -190,7 +190,7 @@ process star_align {
         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
-        tuple file("${id}.Log.final.out"), file("${id}_flagstat.txt") into alignment_logs_star
+        tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
 
     script:
@@ -255,7 +255,7 @@ process hisat_align {
         file hs2_indices from hs2_indices.first()
 
     output:
-        tuple file("${id}.hisat2_log.txt"),file("${id}_flagstat.txt") into alignment_logs_hisat
+        tuple file("${id}.hisat2_log.txt"),file("${id}.flagstat.txt") into alignment_logs_hisat
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_hisat
 
     script:
