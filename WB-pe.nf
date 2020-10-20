@@ -13,10 +13,6 @@ params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
 
-params.aligner = null
-if( !params.aligner ) error "Missing aligner (select `star` or `hisat`)"
-println "aligner: $params.aligner"
-
 params.release = null
 if( !params.release ) error "Missing WB release parameter"
 println "release: $params.release"
