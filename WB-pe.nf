@@ -238,7 +238,7 @@ process hisat_align {
         """
 
 }
-bam_files.into {bam_files_stringtie; bam_files_htseq}
+bam_files.into {bam_files_stringtie; bam_files_htseq; bam_files_qc}
 
 // Stringtie
 process stringtie {
@@ -303,7 +303,7 @@ process align_analysis {
 
     input:
         file("geneset.gtf.gz") from geneset_qc
-        tuple val(id), file(bam), file(bai) from bam_files
+        tuple val(id), file(bam), file(bai) from bam_files_qc
 
     output:
         file("*_QC.txt") into align_qc
