@@ -70,55 +70,6 @@ process trim_reads {
 trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_star; trimmed_reads_qc }
 
 
-////////////////////////////////////////////////
-// ** - multiQC of trimmed fqs
-////////////////////////////////////////////////
-
-process fastqc {
-
-    publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
-
-    cpus small
-    tag { id }
-
-    when:
-      params.qc
-
-    input:
-    tuple val(id), file(forward), file(reverse) from trimmed_reads_qc
-
-    output:
-    file "*_fastqc.{zip,html}" into fastqc_results
-
-    script:
-
-    """
-      fastqc -q $forward $reverse -t ${task.cpus}
-    """
-}
-
-process multiqc {
-
-    publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
-
-    cpus small
-
-    when:
-      params.qc
-
-    input:
-    file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
-
-    output:
-    file "multiqc_report.html" into multiqc_report
-
-    script:
-
-    """
-      multiqc .
-    """
-}
-
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
@@ -342,6 +293,57 @@ process hisat_stringtie_counts {
 
     """
 }
+
+
+////////////////////////////////////////////////
+// ** - multiQC of trimmed fqs
+////////////////////////////////////////////////
+
+process fastqc {
+
+    publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: '*_fastqc.{zip,html}'
+
+    cpus small
+    tag { id }
+
+    when:
+      params.qc
+
+    input:
+    tuple val(id), file(forward), file(reverse) from trimmed_reads_qc
+
+    output:
+    file "*_fastqc.{zip,html}" into fastqc_results
+
+    script:
+
+    """
+      fastqc -q $forward $reverse -t ${task.cpus}
+    """
+}
+
+process multiqc {
+
+    publishDir "${output}/${params.dir}/fastqc", mode: 'copy', pattern: 'multiqc_report.html'
+
+    cpus small
+
+    when:
+      params.qc
+
+    input:
+    file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
+
+    output:
+    file "multiqc_report.html" into multiqc_report
+
+    script:
+
+    """
+      multiqc .
+    """
+}
+
 
 ////////////////////////////////////////////////
 // ** - Post-alignment QC
