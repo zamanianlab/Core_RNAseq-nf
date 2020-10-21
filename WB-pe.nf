@@ -191,7 +191,7 @@ process star_align {
 
     cpus big
     tag { id }
-    maxForks 4
+    maxForks 8
 
     when:
       params.star
@@ -263,7 +263,7 @@ process hisat_align {
 
     cpus big
     tag { id }
-    maxForks 4
+    maxForks 8
 
     when:
       params.hisat
