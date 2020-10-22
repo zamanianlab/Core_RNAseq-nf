@@ -97,6 +97,7 @@ geneset_gtf.into { geneset_hisat; geneset_stringtie; geneset_star; geneset_qc }
 reference_fa.into { reference_hisat; reference_star }
 
 
+
 ////////////////////////////////////////////////
 // ** - STAR pipeline
 ////////////////////////////////////////////////
@@ -163,14 +164,15 @@ process star_align {
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
             --outFileNamePrefix ${id}. --readFilesIn  ${forward} ${reverse}\
             --quantMode GeneCounts --outSAMattrRGline ID:${id}
-          samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.Aligned.out.bam
+          samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           samtools flagstat ${id}.bam > ${id}.flagstat.txt
           cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.tab
         """
-// remove -m16G
+// remove -m 8G
 }
+
 
 
 ////////////////////////////////////////////////
@@ -233,7 +235,7 @@ process hisat_align {
         """
           hisat2 -p ${task.cpus} -x $index_base -1 ${forward} -2 ${reverse} --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
              samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
-          samtools sort -@ ${task.cpus} -m 16G -o ${id}.bam ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.unsorted.bam
           rm *.unsorted.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           samtools flagstat ${id}.bam > ${id}.flagstat.txt
@@ -343,6 +345,7 @@ process multiqc {
       multiqc .
     """
 }
+
 
 
 ////////////////////////////////////////////////

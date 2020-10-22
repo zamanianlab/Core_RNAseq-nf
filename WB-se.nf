@@ -29,8 +29,13 @@ params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
+// flag for STAR (--star) or hisat (--hisat)
+params.star = false
+params.hisat = false
+
 // flag for fastqc and multiqc (--qc)
 params.qc = false
+
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files
@@ -44,7 +49,7 @@ fqs = Channel.fromPath(input + "/${params.dir}/*.f[a-z]*q.gz")
 // ** - Trim reads
 ////////////////////////////////////////////////
 
-process trim_reads_se {
+process trim_reads {
 
   publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.{json,html}'
 
@@ -65,7 +70,235 @@ process trim_reads_se {
     fastp -i $reads -w ${task.cpus} -o ${id_out}.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
   """
 }
-trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_qc }
+trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_star; trimmed_reads_qc }
+
+
+
+////////////////////////////////////////////////
+// ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
+////////////////////////////////////////////////
+
+process fetch_genome {
+
+    cpus small
+
+    output:
+        file("geneset.gtf.gz") into geneset_gtf
+        file("reference.fa.gz") into reference_fa
+
+    script:
+
+        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${params.release}/species/${params.species}/${params.prjn}"
+
+    """
+        echo '${prefix}'
+        wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.canonical_geneset.gtf.gz -O geneset.gtf.gz
+        wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz -O reference.fa.gz
+    """
+}
+geneset_gtf.into { geneset_hisat; geneset_stringtie; geneset_star; geneset_qc }
+reference_fa.into { reference_hisat; reference_star }
+
+
+
+////////////////////////////////////////////////
+// ** - STAR pipeline
+////////////////////////////////////////////////
+
+// Build STAR Index using reference genome and annotation file
+process star_index {
+
+    cpus big
+
+    when:
+      params.star
+
+    input:
+        file("geneset.gtf.gz") from geneset_star
+        file("reference.fa.gz") from reference_star
+
+    output:
+        file("STAR_index/*") into star_indices
+
+    script:
+        overhang = params.rlen - 1
+
+    """
+        zcat reference.fa.gz > reference.fa
+        zcat geneset.gtf.gz > geneset.gtf
+        mkdir STAR_index
+
+        STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
+          --genomeFastaFiles reference.fa \
+          --sjdbGTFfile geneset.gtf \
+          --sjdbOverhang ${overhang}
+    """
+
+}
+
+process star_align {
+
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.tab'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+
+    cpus big
+    tag { id }
+    maxForks 8
+
+    when:
+      params.star
+
+    input:
+        file("STAR_index/*") from star_indices
+        tuple val(id), file(reads) from trimmed_reads_star
+
+    output:
+        tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
+        file("${id}.ReadsPerGene.tab") into star_counts
+
+    script:
+
+        """
+          STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index\
+            --outSAMtype BAM Unsorted --readFilesCommand zcat \
+            --outFileNamePrefix ${id}. --readFilesIn  ${reads}\
+            --quantMode GeneCounts --outSAMattrRGline ID:${id}
+          samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.Aligned.out.bam
+          rm *.Aligned.out.bam
+          samtools index -@ ${task.cpus} -b ${id}.bam
+          samtools flagstat ${id}.bam > ${id}.flagstat.txt
+          cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.tab
+        """
+// remove -m 8G
+}
+
+
+
+////////////////////////////////////////////////
+// ** - HiSat2/Stringtie pipeline
+////////////////////////////////////////////////
+
+// Create HiSat2 Index using reference genome and annotation file
+extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
+extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
+
+process hisat_index {
+
+    cpus big
+
+    when:
+      params.hisat
+
+    input:
+        file("geneset.gtf.gz") from geneset_hisat
+        file("reference.fa.gz") from reference_hisat
+
+    output:
+        file "*.ht2" into hs2_indices
+
+    """
+        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
+        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
+        zcat reference.fa.gz > reference.fa
+        hisat2-build -p ${task.cpus} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+    """
+
+}
+
+// HiSat2 alignment
+process hisat_align {
+
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '*.flagstat.txt'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+
+    cpus big
+    tag { id }
+    maxForks 8
+
+    when:
+      params.hisat
+
+    input:
+        tuple val(id), file(reads) from trimmed_reads_hisat
+        file hs2_indices from hs2_indices.first()
+
+    output:
+        tuple file("${id}.hisat2_log.txt"),file("${id}.flagstat.txt") into alignment_logs_hisat
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_hisat
+
+    script:
+        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+
+        """
+          hisat2 -p ${task.cpus} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" --summary-file ${id}.hisat2_log.txt | \
+             samtools view -@ ${task.cpus} -bS > ${id}.unsorted.bam
+          samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.unsorted.bam
+          rm *.unsorted.bam
+          samtools index -@ ${task.cpus} -b ${id}.bam
+          samtools flagstat ${id}.bam > ${id}.flagstat.txt
+        """
+
+}
+bam_files_hisat.into {bam_files_stringtie; bam_files_htseq; bam_files_qc}
+
+// Stringtie
+process hisat_stringtie {
+
+    publishDir "${output}/${params.dir}/hisat", mode: 'copy', pattern: '**/*'
+
+    cpus small
+    tag { id }
+
+    when:
+      params.hisat
+
+    input:
+        file("geneset.gtf.gz") from geneset_stringtie
+        tuple val(id), ("${id}.bam"), file("${id}.bam.bai") from bam_files_stringtie
+
+    output:
+        file("${id}/*") into stringtie_exp
+
+    script:
+
+        """
+          zcat geneset.gtf.gz > geneset.gtf
+          stringtie ${id}.bam -p ${task.cpus} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+          rm *.gtf
+        """
+
+}
+
+// Stringtie table counts [collect stringtie outputs to confirm stringtie is complete before generating counts]
+prepDE = file("${aux}/scripts/prepDE.py")
+process hisat_stringtie_counts {
+
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
+
+    cpus small
+
+    when:
+      params.hisat
+
+    input:
+      val(id) from stringtie_exp.toSortedList()
+
+    output:
+      file ("gene_count_matrix.csv") into gene_count_matrix
+      file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+      python2 ${prepDE} -i ${output}/${params.dir}/hisat -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
+
 
 
 ////////////////////////////////////////////////
@@ -118,107 +351,12 @@ process multiqc {
 }
 
 
-////////////////////////////////////////////////
-// ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
-////////////////////////////////////////////////
-
-process fetch_genome {
-
-    cpus small
-
-    output:
-        file("geneset.gtf.gz") into geneset_gtf
-        file("reference.fa.gz") into reference_fa
-
-    script:
-
-        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${params.release}/species/${params.species}/${params.prjn}"
-
-    """
-        echo '${prefix}'
-        wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.canonical_geneset.gtf.gz -O geneset.gtf.gz
-        wget -c ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz -O reference.fa.gz
-    """
-}
-geneset_gtf.into { geneset_hisat; geneset_stringtie; geneset_qc }
-reference_fa.into { reference_hisat }
-
-
-////////////////////////////////////////////////
-// ** - HiSat2/Stringtie pipeline
-////////////////////////////////////////////////
-
-// Create HiSat2 Index using reference genome and annotation file
-extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
-extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
-
-process build_hisat_index {
-
-    cpus big
-
-    input:
-        file("geneset.gtf.gz") from geneset_hisat
-        file("reference.fa.gz") from reference_hisat
-
-    output:
-        file "*.ht2" into hs2_indices
-
-    """
-        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
-        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
-        zcat reference.fa.gz > reference.fa
-        hisat2-build -p ${task.cpus} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
-    """
-
-}
-
-// Alignment and stringtie
-process hisat2_stringtie {
-
-    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '**/*'
-    publishDir "${output}/${params.dir}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
-
-    cpus big
-    tag { id }
-    maxForks 4
-
-    input:
-        tuple val(id), file(reads) from trimmed_reads_hisat
-        file("geneset.gtf.gz") from geneset_stringtie
-        file hs2_indices from hs2_indices.first()
-
-    output:
-        file "${id}.hisat2_log.txt" into alignment_logs
-        file("${id}/*") into stringtie_exp
-        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files
-        file("${id}.bam.bai") into bam_indexes
-
-    script:
-        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
-
-        """
-          hisat2 -p ${task.cpus} -x $index_base -U ${reads} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-          samtools view -bS ${id}.sam > ${id}.unsorted.bam
-          rm *.sam
-          samtools flagstat ${id}.unsorted.bam
-          samtools sort -@ ${task.cpus} -o ${id}.bam ${id}.unsorted.bam
-          rm *.unsorted.bam
-          samtools index -b ${id}.bam
-          zcat geneset.gtf.gz > geneset.gtf
-          stringtie ${id}.bam -p ${task.cpus} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-          rm *.gtf
-        """
-
-}
-
 
 ////////////////////////////////////////////////
 // ** - Post-alignment QC
 ////////////////////////////////////////////////
 
-process align_analysis {
+process bam_qc {
 
     publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
 
@@ -229,7 +367,7 @@ process align_analysis {
 
     input:
         file("geneset.gtf.gz") from geneset_qc
-        tuple val(id), file(bam), file(bai) from bam_files
+        tuple val(id), file(bam), file(bai) from bam_files_qc
 
     output:
         file("*_QC.txt") into align_qc
@@ -267,32 +405,5 @@ process align_analysis {
       echo -n "3utr," >> ${bam}_QC.txt
       samtools view -F 0x4 -q 60 -c tmp.sam >> ${bam}_QC.txt
       rm tmp.sam
-    """
-}
-
-
-////////////////////////////////////////////////
-// ** - Stringtie table counts [collect hisat2 logs to confirm alignment is complete before generating counts]
-////////////////////////////////////////////////
-
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts_final {
-
-    echo true
-
-    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.csv'
-
-    cpus small
-
-    input:
-      file (hisat2_log) from alignment_logs.collect()
-
-    output:
-      file ("gene_count_matrix.csv") into gene_count_matrix
-      file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-      python2 ${prepDE} -i ${output}/${params.dir}/expression -l ${params.rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
     """
 }
