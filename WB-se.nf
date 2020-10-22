@@ -175,7 +175,7 @@ process star_align {
         """
 // remove -m 8G
 }
-
+bam_files_star.into {bam_files_qc}
 
 
 ////////////////////////////////////////////////
