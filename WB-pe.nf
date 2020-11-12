@@ -138,8 +138,8 @@ process star_align {
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.tab'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus big
     tag { id }
@@ -352,6 +352,7 @@ process multiqc {
 // ** - Post-alignment QC
 ////////////////////////////////////////////////
 
+/*
 process bam_qc {
 
     publishDir "${output}/${params.dir}/align_qc", mode: 'copy', pattern: '*_QC.txt'
@@ -403,3 +404,4 @@ process bam_qc {
       rm tmp.sam
     """
 }
+*/
