@@ -164,13 +164,13 @@ process star_align {
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
             --outFileNamePrefix ${id}. --readFilesIn ${forward} ${reverse}\
             --quantMode GeneCounts --outSAMattrRGline ID:${id}
-          samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.Aligned.out.bam
+          samtools sort -@ ${task.cpus} -m 12G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           samtools flagstat ${id}.bam > ${id}.flagstat.txt
           cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.tab
         """
-// remove -m 8G
+// remove -m 12G
 }
 bam_files_star.into {bam_files_qc}
 
