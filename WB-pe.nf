@@ -143,7 +143,7 @@ process star_align {
 
     cpus big
     tag { id }
-    maxForks 5
+    maxForks 6
 
     when:
       params.star
