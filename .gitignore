@@ -1,0 +1,12 @@
+.DS_Store
+data
+test_data
+output
+downstream
+work
+.nextflow
+.nextflow.log*
+.nextflow.history
+timeline*
+trace*
+dag*
