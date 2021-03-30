@@ -70,7 +70,7 @@ process fetch_ref {
     publishDir "${genome}/reference/", mode: 'copy'
 
     output:
-        file("reference.fasta") into reference_fa
+        file("reference.fa") into reference_fa
 
     """
         echo '${genome_url}'
