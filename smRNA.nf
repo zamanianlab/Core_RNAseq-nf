@@ -158,7 +158,7 @@ process fetch_ref_virus {
     publishDir "${genome}/viral/", mode: 'copy'
 
     output:
-        file("Ae_flavivirus_mo.fa"),file("Ae_flavivirus_bangkok.fa") into reference_fa_virus
+        tuple file("Ae_flavivirus_mo.fa"),file("Ae_flavivirus_bangkok.fa") into reference_fa_virus
 
     """
         wget ${flavi_mo_url} -O Ae_flavivirus_mo.fa
@@ -173,7 +173,7 @@ process build_bwa_index_virus {
     cpus huge
 
     input:
-        file("Ae_flavivirus_mo.fa"),file("Ae_flavivirus_bangkok.fa") from bwa_index_virus
+        tuple file("Ae_flavivirus_mo.fa"),file("Ae_flavivirus_bangkok.fa") from bwa_index_virus
 
     output:
         file "Ae_flavivirus_mo.*" into bwa_indices_mo
