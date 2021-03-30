@@ -56,7 +56,7 @@ process trim_reads {
      fastp -i $reads -a AACTGTAGGCACCATCAAT -o ${id_out}.fq.gz -y -l 15 -h ${id_out}.html -j ${id_out}.json
   """
 }
-trimmed_fqs.set { trimmed_reads_bwa; trimmed_reads_qc }
+trimmed_fqs.into { trimmed_reads_bwa; trimmed_reads_qc }
 
 
 ////////////////////////////////////////////////
