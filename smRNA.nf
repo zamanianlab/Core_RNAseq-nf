@@ -111,7 +111,7 @@ process build_bwa_index {
 ////////////////////////////////////////////////
 
 process bwa_align {
-    publishDir "${output}/${params.dir}/bwa_stats/", mode: 'copy', pattern: '*align_.txt'
+    publishDir "${output}/${params.dir}/bwa_stats/", mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
@@ -128,7 +128,6 @@ process bwa_align {
         file("${id}.bam.bai") into bam_indexes
 
     script:
-        fa_prefix = reads[0].toString() - ~/(\.f[a-z]*q\.gz)$/
         index_base = bwa_indices[0].toString() - ~/.fa[.a-z]*/
 
         """
@@ -140,7 +139,7 @@ process bwa_align {
         samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.unsorted.bam
         rm *.unsorted.bam
         samtools index -@ ${task.cpus} -b ${id}.bam
-        samtools flagstat ${id}.bam > ${id}_align.txt
+        samtools flagstat ${id}.bam > ${id}.flagstat.txt
         """
 }
 
@@ -187,7 +186,7 @@ process build_bwa_index_virus {
 
 
 process bwa_align_mo {
-    publishDir "${output}/${params.dir}/bwa_stats_mo/", mode: 'copy', pattern: '*align_.txt'
+    publishDir "${output}/${params.dir}/bwa_stats_mo/", mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/bams_mo", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams_mo", mode: 'copy', pattern: '*.bam.bai'
 
@@ -204,7 +203,6 @@ process bwa_align_mo {
         file("${id}.bam.bai") into bam_indexes_mo
 
     script:
-        fa_prefix = reads[0].toString() - ~/(\.f[a-z]*q\.gz)$/
         index_base = bwa_indices[0].toString() - ~/.fa[.a-z]*/
 
         """
@@ -216,12 +214,12 @@ process bwa_align_mo {
         samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.unsorted.bam
         rm *.unsorted.bam
         samtools index -@ ${task.cpus} -b ${id}.bam
-        samtools flagstat ${id}.bam > ${id}_align.txt
+        samtools flagstat ${id}.bam > ${id}.flagstat.txt
         """
 }
 
 process bwa_align_bangkok {
-    publishDir "${output}/${params.dir}/bwa_stats_bangkok/", mode: 'copy', pattern: '*align_.txt'
+    publishDir "${output}/${params.dir}/bwa_stats_bangkok/", mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/bams_bangkok", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/${params.dir}/bams_bangkok", mode: 'copy', pattern: '*.bam.bai'
 
@@ -238,7 +236,6 @@ process bwa_align_bangkok {
         file("${id}.bam.bai") into bam_indexes_bangkok
 
     script:
-        fa_prefix = reads[0].toString() - ~/(\.f[a-z]*q\.gz)$/
         index_base = bwa_indices[0].toString() - ~/.fa[.a-z]*/
 
         """
@@ -250,6 +247,6 @@ process bwa_align_bangkok {
         samtools sort -@ ${task.cpus} -m 8G -o ${id}.bam ${id}.unsorted.bam
         rm *.unsorted.bam
         samtools index -@ ${task.cpus} -b ${id}.bam
-        samtools flagstat ${id}.bam > ${id}_align.txt
+        samtools flagstat ${id}.bam > ${id}.flagstat.txt
         """
 }
