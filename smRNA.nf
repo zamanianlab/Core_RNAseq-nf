@@ -158,14 +158,14 @@ process fetch_ref_virus {
     publishDir "${genome}/viral/", mode: 'copy'
 
     output:
-        file("reference.fa") into reference_fa
+        file("Ae_flavivirus_mo.fa"),file("Ae_flavivirus_bangkok.fa") into reference_fa_virus
 
     """
         wget ${flavi_mo_url} -O Ae_flavivirus_mo.fa
         wget ${flavi_bangkok_url} -O Ae_flavivirus_bangkok.fa
     """
 }
-reference_fa.into { bwa_index_virus }
+reference_fa_virus.into { bwa_index_virus }
 
 
 process build_bwa_index_virus {
