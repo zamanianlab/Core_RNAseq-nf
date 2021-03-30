@@ -63,11 +63,11 @@ trimmed_fqs.into { trimmed_reads_bwa; trimmed_reads_qc }
 
 
 ////////////////////////////////////////////////
-// ** - Fetch viral genomes
+// ** - Fetch viral genome
 ////////////////////////////////////////////////
 
-Ae_bangkok_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/fasta/data/VectorBase-51_AalbopictusFPA_Genome.fasta"
-Ae_mo_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/gff/data/VectorBase-51_AalbopictusFPA.gff"
+genome_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/fasta/data/VectorBase-51_AalbopictusFPA_Genome.fasta"
+annot_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/gff/data/VectorBase-51_AalbopictusFPA.gff"
 
 process fetch_ref {
 
