@@ -198,7 +198,7 @@ process bwa_align_mo {
         file bwa_indices from bwa_indices_mo.first()
 
     output:
-        file("${id}_align.txt") into bwa_stats_mo
+        file("${id}.flagstat.txt") into bwa_stats_mo
         file("${id}.bam") into bam_files_mo
         file("${id}.bam.bai") into bam_indexes_mo
 
@@ -231,7 +231,7 @@ process bwa_align_bangkok {
         file bwa_indices from bwa_indices_bangkok.first()
 
     output:
-        file("${id}_align.txt") into bwa_stats_bangkok
+        file("${id}.flagstat.txt") into bwa_stats_bangkok
         file("${id}.bam") into bam_files_bangkok
         file("${id}.bam.bai") into bam_indexes_bangkok
 
