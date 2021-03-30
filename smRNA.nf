@@ -59,12 +59,15 @@ process trim_reads {
 trimmed_fqs.into { trimmed_reads_bwa; trimmed_reads_qc }
 
 
+
+
 ////////////////////////////////////////////////
-// ** - Fetch genome
+// ** - Fetch viral genomes
 ////////////////////////////////////////////////
 
-genome_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/fasta/data/VectorBase-51_AalbopictusFPA_Genome.fasta"
-annot_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/gff/data/VectorBase-51_AalbopictusFPA.gff"
+Ae_bangkok_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/fasta/data/VectorBase-51_AalbopictusFPA_Genome.fasta"
+Ae_mo_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/gff/data/VectorBase-51_AalbopictusFPA.gff"
+
 process fetch_ref {
 
     publishDir "${genome}/reference/", mode: 'copy'
@@ -88,7 +91,7 @@ reference_fa.into { bwa_index }
 
 process build_bwa_index {
 
-    cpus big
+    cpus huge
 
     input:
         file("reference.fa") from bwa_index
@@ -138,4 +141,47 @@ process bwa_align {
         samtools index -@ ${task.cpus} -b ${id}.bam
         samtools flagstat ${id}.bam > ${id}_align.txt
         """
+}
+
+////////////////////////////////////////////////
+// ** - Fetch genome
+////////////////////////////////////////////////
+
+genome_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/fasta/data/VectorBase-51_AalbopictusFPA_Genome.fasta"
+annot_url="https://vectorbase.org/common/downloads/Current_Release/AalbopictusFPA/gff/data/VectorBase-51_AalbopictusFPA.gff"
+
+process fetch_ref {
+
+    publishDir "${genome}/reference/", mode: 'copy'
+
+    output:
+        file("reference.fa") into reference_fa
+
+    """
+        echo '${genome_url}'
+        wget ${genome_url} -O reference.fa
+        echo '${annot_url}'
+        wget ${annot_url} -O geneset.gff
+    """
+}
+reference_fa.into { bwa_index }
+
+
+////////////////////////////////////////////////
+// ** - Index Genome (bwa)
+////////////////////////////////////////////////
+
+process build_bwa_index {
+
+    cpus huge
+
+    input:
+        file("reference.fa") from bwa_index
+
+    output:
+        file "reference.*" into bwa_indices
+
+    """
+        bwa index reference.fa
+    """
 }
