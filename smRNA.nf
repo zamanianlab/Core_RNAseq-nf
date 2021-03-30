@@ -128,7 +128,7 @@ process bwa_align {
         file("${id}.bam.bai") into bam_indexes
 
     script:
-        fa_prefix = reads[0].toString() - ~/(\.fq\.gz)$/
+        fa_prefix = reads[0].toString() - ~/(\.f[a-z]*q\.gz)$/
         index_base = bwa_indices[0].toString() - ~/.fa[.a-z]*/
 
         """
@@ -204,7 +204,7 @@ process bwa_align_mo {
         file("${id}.bam.bai") into bam_indexes_mo
 
     script:
-        fa_prefix = reads[0].toString() - ~/(\.fq\.gz)$/
+        fa_prefix = reads[0].toString() - ~/(\.f[a-z]*q\.gz)$/
         index_base = bwa_indices[0].toString() - ~/.fa[.a-z]*/
 
         """
@@ -238,7 +238,7 @@ process bwa_align_bangkok {
         file("${id}.bam.bai") into bam_indexes_bangkok
 
     script:
-        fa_prefix = reads[0].toString() - ~/(\.fq\.gz)$/
+        fa_prefix = reads[0].toString() - ~/(\.f[a-z]*q\.gz)$/
         index_base = bwa_indices[0].toString() - ~/.fa[.a-z]*/
 
         """
