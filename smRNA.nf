@@ -59,6 +59,8 @@ process trim_reads {
 }
 trimmed_fqs.into { trimmed_reads_bwa; trimmed_reads_bwa_mo; trimmed_reads_bwa_bangkok; trimmed_reads_qc }
 
+
+
 ////////////////////////////////////////////////
 // ** - Fetch genome and gene annotation files
 ////////////////////////////////////////////////
@@ -101,6 +103,7 @@ process build_bwa_index {
         bwa index reference.fa
     """
 }
+
 
 
 ////////////////////////////////////////////////
