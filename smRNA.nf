@@ -199,9 +199,9 @@ process bwa_align_mo {
         file bwa_indices from bwa_indices_mo.first()
 
     output:
-        file("${id}_align.txt") into bwa_stats
-        file("${id}.bam") into bam_files
-        file("${id}.bam.bai") into bam_indexes
+        file("${id}_align.txt") into bwa_stats_mo
+        file("${id}.bam") into bam_files_mo
+        file("${id}.bam.bai") into bam_indexes_mo
 
     script:
         fa_prefix = reads[0].toString() - ~/(\.fq\.gz)$/
@@ -233,9 +233,9 @@ process bwa_align_bangkok {
         file bwa_indices from bwa_indices_bangkok.first()
 
     output:
-        file("${id}_align.txt") into bwa_stats
-        file("${id}.bam") into bam_files
-        file("${id}.bam.bai") into bam_indexes
+        file("${id}_align.txt") into bwa_stats_bangkok
+        file("${id}.bam") into bam_files_bangkok
+        file("${id}.bam.bai") into bam_indexes_bangkok
 
     script:
         fa_prefix = reads[0].toString() - ~/(\.fq\.gz)$/
