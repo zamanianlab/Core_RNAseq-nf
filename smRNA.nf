@@ -123,7 +123,7 @@ process bwa_align {
         file bwa_indices from bwa_indices.first()
 
     output:
-        file("${id}_align.txt") into bwa_stats
+        file("${id}.flagstat.txt") into bwa_stats
         file("${id}.bam") into bam_files
         file("${id}.bam.bai") into bam_indexes
 
