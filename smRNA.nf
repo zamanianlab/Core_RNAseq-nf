@@ -6,6 +6,7 @@ output=params.output
 aux=params.aux
 genome=params.genome
 
+huge=params.huge
 big=params.big
 small=params.small
 
