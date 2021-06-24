@@ -39,7 +39,7 @@ colnames(gtf.3ext) <- c("seqname","source","feature","start","end","score","stra
 #truncate if exceeds boundaries of contig 
 gtf.3ext <- left_join(gtf.3ext,contig.len, by = "seqname") %>%
   mutate(end = ifelse(strand == "+" & end >= len, len, end)) %>%
-  select(-len, -group_max. -exon_number, -transcript_id)
+  select(-len, -group_max, -exon_number, -transcript_id)
 
 #generate new gtf
 write.table(gtf.3ext,"geneset.3ext.gtf", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
