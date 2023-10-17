@@ -44,8 +44,8 @@ params.qc = false
 // Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q.gz", flat: true)
           .set { fqs }
 
-Channel.fronFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q.gz", flat: true)
-	 .set { fqs }
+Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q.gz", flat: true)
+          .set { fqs }
 
 
 ////////////////////////////////////////////////
