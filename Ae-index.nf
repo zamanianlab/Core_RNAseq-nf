@@ -7,6 +7,7 @@ aux=params.aux
 
 big=params.big
 small=params.small
+huge=params.huge
 
 // Global Params
 params.dir = null
