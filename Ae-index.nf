@@ -14,6 +14,10 @@ params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
 
+params.rlen = null
+if( !params.rlen ) error "Missing length (average read length) parameter"
+println "rlen: $params.rlen"
+
 
 
 ////////////////////////////////////////////////
