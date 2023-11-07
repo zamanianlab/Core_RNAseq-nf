@@ -24,11 +24,13 @@ println "prjn: $params.rlen"
 
 
 ////////////////////////////////////////////////
-// ** - Pull in fq files (paired)
+// ** - Pull in fq files (paired) and indexed genome
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}.f[a-z]*q.gz", flat: true)
+Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
         .set { fq_pairs }
+
+star_indices = Channel.fromPath(output + "/Aeaeg_index/*" )
 
 ////////////////////////////////////////////////
 // ** TRIM READS
@@ -44,90 +46,57 @@ process trim_reads {
    input:
        tuple val(id), file(forward), file(reverse) from fq_pairs
 
-   output:
-       tuple  id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fq_pairs
-       tuple  file("*.html"), file("*.json")  into trim_log
+  output:
+//    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
+    tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
+    tuple file("*.html"), file("*.json")  into trim_log
 
-   """
-       fastp -i $forward -I $reverse -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
-   """
+  """
+	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_trimmed_1.fq.gz -O ${id}_trimmed_2.fq.gz -y -l 150 -h ${id}.html -j ${id}.json	
+  """
 }
-trimmed_fq_pairs.set { trimmed_reads_hisat }
-
-
-////////////////////////////////////////////////
-// ** - LOAD in Aedes HiSat2 index and geneset files
-////////////////////////////////////////////////
-
-geneset_stringtie = file("${genome_dir}/Other/Aedes_aegypti/annotation/geneset_h.gtf.gz")
-hs2_indices = Channel.fromPath("${genome_dir}/Other/Aedes_aegypti/Hisat2_indexes/*.ht2").collect()
-
+trimmed_fq_pairs.set { trimmed_reads_star; trimmed_reads_qc }
 
 ////////////////////////////////////////////////
-// ** - HiSat2/Stringtie pipeline
+// ** Align reads using STAR
 ////////////////////////////////////////////////
 
-// alignment and stringtie combined
-process hisat2_stringtie {
+process star_align {
 
-    publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
-    publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
-    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
+    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
+    publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.tab'
+    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
+    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
 
-    cpus large_core
+    cpus big
     tag { id }
+    maxForks 6
+
 
     input:
-        tuple  val(id), file(forward), file(reverse) from trimmed_reads_hisat
-        file("geneset.gtf.gz") from geneset_stringtie
-        file hs2_indices from hs2_indices.first()
+        file("STAR_index/*") from star_indices
+        tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
-        file "${id}.hisat2_log.txt" into alignment_logs
-        file("${id}/*") into stringtie_exp
-        file("${id}.bam") into bam_files
-        file("${id}.bam.bai") into bam_indexes
+        tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
+        tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
+        file("${id}.ReadsPerGene.tab") into star_counts
 
     script:
-        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
-    """
-        hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-        samtools view -bS ${id}.sam > ${id}.unsorted.bam
-        rm *.sam
-        samtools flagstat ${id}.unsorted.bam
-        samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-        rm *.unsorted.bam
-        samtools index -b ${id}.bam
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-        rm *.gtf
-    """
+        """
+          STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index\
+            --outSAMtype BAM Unsorted --readFilesCommand zcat \
+            --outFileNamePrefix ${id}. --readFilesIn ${forward} ${reverse}\
+            --peOverlapNbasesMin 10 \
+            --quantMode GeneCounts --outSAMattrRGline ID:${id}
+          samtools sort -@ ${task.cpus} -m 24G -o ${id}.bam ${id}.Aligned.out.bam
+          rm *.Aligned.out.bam
+          samtools index -@ ${task.cpus} -b ${id}.bam
+          samtools flagstat ${id}.bam > ${id}.flagstat.txt
+          cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.tab
+        """
+// remove -m 12G
 }
-
-////////////////////////////////////////////////
-// ** - STRINGTIE table counts
-////////////////////////////////////////////////
-
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_counts_final {
-
-    echo true
-
-    publishDir "${output}/counts", mode: 'copy', pattern: '*.csv'
-
-    cpus small_core
-
-    when:
-      params.stc
-
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-        python ${prepDE} -i ${output}/expression -l ${rlen} -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
-}
+bam_files_star.into {bam_files_qc}
