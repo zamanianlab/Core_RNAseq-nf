@@ -89,9 +89,6 @@ process star_index {
 
     cpus big
 
-    when:
-      params.star
-
     input:
         file("geneset.gtf.gz") from geneset_star
         file("reference.fa.gz") from reference_star
