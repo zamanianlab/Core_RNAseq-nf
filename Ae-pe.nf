@@ -90,8 +90,8 @@ process star_index {
     cpus big
 
     input:
-        file("geneset.gtf.gz") from geneset_star
-        file("reference.fa.gz") from reference_star
+        file("geneset.gff") from geneset_star
+        file("reference.fa") from reference_star
 
     output:
         file("STAR_index/*") into star_indices
@@ -100,13 +100,11 @@ process star_index {
         overhang = params.rlen - 1
 
     """
-        zcat reference.fa.gz > reference.fa
-        zcat geneset.gtf.gz > geneset.gtf
         mkdir STAR_index
 
         STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
-          --sjdbGTFfile geneset.gtf \
+          --sjdbGTFfile geneset.gff \
           --sjdbOverhang ${overhang}
     """
 
