@@ -1,22 +1,18 @@
 #!/usr/bin/env nextflow
 
-// Nextflow.configuration
-aux=config.aux_location
-data=config.data_location // data_location or btdata_location
-output=config.output_location
-genome_dir=config.genome_location
+// Params from config files (system-dependent)
+input=params.input
+output=params.output
+aux=params.aux
 
-large_core=config.large_core
-small_core=config.small_core
+big=params.big
+small=params.small
 
-// Parameters
+// Global Parameters
 
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
 println "dir: $params.dir"
-
-// flag for final stringtie_table_counts process (--stc)
-params.stc = false
 
 params.rlen = null
 if( !params.rlen ) error "Missing length (average read length) parameter"
