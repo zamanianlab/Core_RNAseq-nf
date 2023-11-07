@@ -26,8 +26,8 @@ println "prjn: $params.rlen"
 Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
         .set { fqs }
 
-Channel.fromPath(output + "/Aeaeg_index/*" )
-        .set { star_indices }
+//Channel.fromPath(output + "/Aeaeg_index/Star_index/*" )
+        //.set { star_indices }
 
 ////////////////////////////////////////////////
 // ** TRIM READS
@@ -55,9 +55,68 @@ process trim_reads {
 trimmed_fqs.into { trimmed_reads_star; trimmed_reads_qc }
 
 ////////////////////////////////////////////////
-// ** Align reads using STAR
+// ** - Fetch genome and gene annotation files
 ////////////////////////////////////////////////
 
+genome_url="https://vectorbase.org/common/downloads/Current_Release/AaegyptiLVP_AGWG/fasta/data/VectorBase-65_AaegyptiLVP_AGWG_Genome.fasta"
+annot_url="https://vectorbase.org/common/downloads/Current_Release/AaegyptiLVP_AGWG/gff/data/VectorBase-65_AaegyptiLVP_AGWG.gff"
+
+process fetch_ref {
+
+    publishDir "${output}/${params.dir}/", mode: 'copy'
+
+    output:
+        file("reference.fa") into reference_fa
+        file("geneset.gff") into geneset_gff
+
+    """
+        echo '${genome_url}'
+        wget ${genome_url} -O reference.fa
+        echo '${annot_url}'
+        wget ${annot_url} -O geneset.gff
+    """
+}
+
+geneset_gff.into { geneset_star}
+reference_fa.into { reference_star }
+
+////////////////////////////////////////////////
+// ** - STAR pipeline
+////////////////////////////////////////////////
+
+// Build STAR Index using reference genome and annotation file
+process star_index {
+
+    cpus big
+
+    when:
+      params.star
+
+    input:
+        file("geneset.gtf.gz") from geneset_star
+        file("reference.fa.gz") from reference_star
+
+    output:
+        file("STAR_index/*") into star_indices
+
+    script:
+        overhang = params.rlen - 1
+
+    """
+        zcat reference.fa.gz > reference.fa
+        zcat geneset.gtf.gz > geneset.gtf
+        mkdir STAR_index
+
+        STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
+          --genomeFastaFiles reference.fa \
+          --sjdbGTFfile geneset.gtf \
+          --sjdbOverhang ${overhang}
+    """
+
+}
+
+
+// ** Align reads using STAR
 process star_align {
 
     publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
