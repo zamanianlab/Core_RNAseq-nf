@@ -24,9 +24,10 @@ println "prjn: $params.rlen"
 ////////////////////////////////////////////////
 
 Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
-        .set { fq_pairs }
+        .set { fqs }
 
-star_indices = Channel.fromPath(output + "/Aeaeg_index/*" )
+Channel.fromPath(output + "/Aeaeg_index/*" )
+        .set { star_indices }
 
 ////////////////////////////////////////////////
 // ** TRIM READS
@@ -34,13 +35,13 @@ star_indices = Channel.fromPath(output + "/Aeaeg_index/*" )
 
 process trim_reads {
 
-   cpus  big
-   tag { id }
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
+  publishDir "${output}/${params.dir}/trim_stats/", mode: 'copy', pattern: '*.{json,html}'
 
+   cpus  small
+   tag { id }
+   
    input:
-       tuple val(id), file(forward), file(reverse) from fq_pairs
+       tuple val(id), file(forward), file(reverse) from fqs
 
   output:
 //    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
@@ -51,7 +52,7 @@ process trim_reads {
 	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_trimmed_1.fq.gz -O ${id}_trimmed_2.fq.gz -y -l 150 -h ${id}.html -j ${id}.json	
   """
 }
-trimmed_fqs.set { trimmed_reads_star; trimmed_reads_qc }
+trimmed_fqs.into { trimmed_reads_star; trimmed_reads_qc }
 
 ////////////////////////////////////////////////
 // ** Align reads using STAR
