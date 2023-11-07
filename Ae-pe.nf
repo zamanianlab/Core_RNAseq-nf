@@ -51,7 +51,7 @@ process trim_reads {
 	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_trimmed_1.fq.gz -O ${id}_trimmed_2.fq.gz -y -l 150 -h ${id}.html -j ${id}.json	
   """
 }
-trimmed_fq_pairs.set { trimmed_reads_star; trimmed_reads_qc }
+trimmed_fqs.set { trimmed_reads_star; trimmed_reads_qc }
 
 ////////////////////////////////////////////////
 // ** Align reads using STAR
