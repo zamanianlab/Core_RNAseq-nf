@@ -34,7 +34,7 @@ star_indices = Channel.fromPath(output + "/Aeaeg_index/*" )
 
 process trim_reads {
 
-   cpus large_core
+   cpus  big
    tag { id }
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
