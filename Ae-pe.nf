@@ -58,8 +58,8 @@ trimmed_fqs.into { trimmed_reads_star; trimmed_reads_qc }
 // ** - Fetch genome and gene annotation files
 ////////////////////////////////////////////////
 
-genome_url="https://vectorbase.org/common/downloads/Current_Release/AaegyptiLVP_AGWG/fasta/data/VectorBase-65_AaegyptiLVP_AGWG_Genome.fasta"
-annot_url="https://vectorbase.org/common/downloads/Current_Release/AaegyptiLVP_AGWG/gff/data/VectorBase-65_AaegyptiLVP_AGWG.gff"
+genome_url="https://vectorbase.org/common/downloads/release-65/AaegyptiLVP_AGWG/fasta/data/VectorBase-65_AaegyptiLVP_AGWG_Genome.fasta"
+annot_url="https://vectorbase.org/common/downloads/release-65/AaegyptiLVP_AGWG/gff/data/VectorBase-65_AaegyptiLVP_AGWG.gff"
 
 process fetch_ref {
 
@@ -105,6 +105,7 @@ process star_index {
         STAR --runThreadN ${task.cpus} --runMode genomeGenerate  --genomeDir STAR_index \
           --genomeFastaFiles reference.fa \
           --sjdbGTFfile geneset.gff \
+          --sjdbGTFtagExonParentTranscript Parent \
           --sjdbOverhang ${overhang}
     """
 
