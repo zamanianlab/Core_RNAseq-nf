@@ -40,7 +40,7 @@ params.qc = false
 ////////////////////////////////////////////////
 // ** - Pull in fq files
 ////////////////////////////////////////////////
-# SRA#####_R1_001.fastq
+// SRA#####_R1_001.fastq
 Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q", flat: true)
           .set { fqs }
 
