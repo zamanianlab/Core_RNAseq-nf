@@ -71,9 +71,10 @@ process trim_reads {
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-//	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fq.gz -O ${id}_2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
     fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """ 
+
+//	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fq.gz -O ${id}_2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
 
 }
 trimmed_fqs.into { trimmed_reads_hisat; trimmed_reads_star; trimmed_reads_qc }
