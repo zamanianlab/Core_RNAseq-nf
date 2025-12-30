@@ -30,11 +30,11 @@ if( !params.rlen ) error "Missing length (average read length) parameter"
 println "rlen: $params.rlen"
 
 // flag for STAR (--star) or hisat (--hisat)
-params.star = false
+params.star = true
 params.hisat = false
 
 // flag for fastqc, multiqc, and bam qc proceses (--qc)
-params.qc = false
+params.qc = true
 
 
 ////////////////////////////////////////////////
