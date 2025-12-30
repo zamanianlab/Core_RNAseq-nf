@@ -34,7 +34,7 @@ params.star = true
 params.hisat = false
 
 // flag for fastqc, multiqc, and bam qc proceses (--qc)
-params.qc = true
+params.qc = false
 
 
 ////////////////////////////////////////////////
