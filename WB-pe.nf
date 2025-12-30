@@ -165,6 +165,7 @@ process star_align {
     //     tuple val(id), file(forward), file(reverse) from trimmed_reads_star
        input: //EGR
            path "STAR_index" from star_indices //EGR
+           tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
         tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
