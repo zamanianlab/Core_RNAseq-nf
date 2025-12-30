@@ -124,8 +124,10 @@ process star_index {
         file("geneset.gtf.gz") from geneset_star
         file("reference.fa.gz") from reference_star
 
-    output:
-        file("STAR_index/*") into star_indices
+    // output:
+    //    file("STAR_index/*") into star_indices
+       output: // EGR
+           path "STAR_index" into star_indices // EGR
 
     script:
         overhang = params.rlen - 1
@@ -158,9 +160,11 @@ process star_align {
     when:
       params.star
 
-    input:
-        file("STAR_index/*") from star_indices
-        tuple val(id), file(forward), file(reverse) from trimmed_reads_star
+    // input:
+    //     file("STAR_index/*") from star_indices
+    //     tuple val(id), file(forward), file(reverse) from trimmed_reads_star
+       input: //EGR
+           path "STAR_index" from star_indices //EGR
 
     output:
         tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
