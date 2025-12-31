@@ -45,7 +45,7 @@ params.qc = false
 // Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q", flat: true)
 // Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q", flat: true)
 // Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
-Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fastq.gz", flat: true)
+Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fastq", flat: true)
  .set { fqs }
 
 
@@ -66,11 +66,11 @@ process trim_reads {
   output:
  //   tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
  //   tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
-  tuple id, file("${id}_1.fastq.gz"), file("${id}_2.fastq.gz") into trimmed_fqs	
+  tuple id, file("${id}_1.fastq.gz"), file("${id}_2.fastq") into trimmed_fqs	
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fastq.gz -O ${id}_2.fastq.gz -y -l 50 -h ${id}.html -j ${id}.json
+    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fastq.gz -O ${id}_2.fastq -y -l 50 -h ${id}.html -j ${id}.json
   """ 
 // fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
 //	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fq.gz -O ${id}_2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
