@@ -66,8 +66,8 @@ process trim_reads {
     tuple val(id), file(forward), file(reverse) from fqs
 
   output:
-    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
-//    tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
+ //   tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
+    tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
