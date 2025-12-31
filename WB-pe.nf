@@ -70,9 +70,9 @@ process trim_reads {
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
+    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fastq.gz -O ${id}_2.fastq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """ 
-
+// fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
 //	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fq.gz -O ${id}_2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
 
 }
@@ -123,10 +123,8 @@ process star_index {
         file("geneset.gtf.gz") from geneset_star
         file("reference.fa.gz") from reference_star
 
-    // output:
-    //    file("STAR_index/*") into star_indices
-       output: // EGR
-           path "STAR_index" into star_indices // EGR
+     output:
+        file("STAR_index/*") into star_indices
 
     script:
         overhang = params.rlen - 1
@@ -159,12 +157,9 @@ process star_align {
     when:
       params.star
 
-    // input:
-    //     file("STAR_index/*") from star_indices
-    //     tuple val(id), file(forward), file(reverse) from trimmed_reads_star
-       input: //EGR
-           path "STAR_index" from star_indices //EGR
-           tuple val(id), file(forward), file(reverse) from trimmed_reads_star
+     input:
+         file("STAR_index/*") from star_indices
+         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
         tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
