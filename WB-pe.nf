@@ -43,9 +43,9 @@ params.qc = false
 // SRA#####_R1_001.fastq or SRR1234567_1.fastq.gz - see filenames to correctly change block below
 // Channel.fromFilePairs("${input}/${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
 // Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q", flat: true)
-// Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q", flat: true)
+Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q", flat: true)
 // Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
-Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fastq", flat: true)
+// Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fastq", flat: true)
  .set { fqs }
 
 
