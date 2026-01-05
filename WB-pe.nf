@@ -70,7 +70,7 @@ process trim_reads {
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fastq.gz -O ${id}_2.fastq -y -l 50 -h ${id}.html -j ${id}.json
+    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fastq.gz -O ${id}_2.fastq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """ 
 // fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
 //	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fq.gz -O ${id}_2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
