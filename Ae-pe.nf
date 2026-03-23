@@ -23,8 +23,11 @@ println "prjn: $params.rlen"
 // ** - Pull in fq files (paired) and indexed genome
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
+Channel.fromFilePairs("${input}/${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
         .set { fqs }
+
+//Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
+        //.set { fqs }
 
 //Channel.fromPath(output + "/Aeaeg_index/Star_index/*" )
         //.set { star_indices }
@@ -44,13 +47,14 @@ process trim_reads {
        tuple val(id), file(forward), file(reverse) from fqs
 
   output:
-//    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
-    tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
+    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
+//    tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_trimmed_1.fq.gz -O ${id}_trimmed_2.fq.gz -y -l 150 -h ${id}.html -j ${id}.json	
+    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json	
   """
+// fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_trimmed_1.fq.gz -O ${id}_trimmed_2.fq.gz -y -l 150 -h ${id}.html -j ${id}.json
 }
 trimmed_fqs.into { trimmed_reads_star; trimmed_reads_qc }
 
