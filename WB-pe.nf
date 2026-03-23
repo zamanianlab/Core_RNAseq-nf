@@ -42,8 +42,8 @@ params.qc = false
 ////////////////////////////////////////////////
 // SRA#####_R1_001.fastq or SRR1234567_1.fastq.gz - see filenames to correctly change block below
 // Channel.fromFilePairs("${input}/${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
-// Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q", flat: true)
-Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q", flat: true)
+Channel.fromFilePairs(input + "/${params.dir}/*_R{1,2}_001.f[a-z]*q", flat: true)
+// Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.f[a-z]*q", flat: true)
 // Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fq.gz", flat: true)
 // Channel.fromFilePairs(input + "/${params.dir}/*_{1,2}.fastq", flat: true)
  .set { fqs }
@@ -64,13 +64,13 @@ process trim_reads {
     tuple val(id), file(forward), file(reverse) from fqs
 
   output:
- //   tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
+    tuple id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fqs
  //   tuple id, file("${id}_1.fq.gz"), file("${id}_2.fq.gz") into trimmed_fqs	
-  tuple id, file("${id}_1.fastq.gz"), file("${id}_2.fastq.gz") into trimmed_fqs	
+ // tuple id, file("${id}_1.fastq.gz"), file("${id}_2.fastq.gz") into trimmed_fqs	
     tuple file("*.html"), file("*.json")  into trim_log
 
   """
-    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fastq.gz -O ${id}_2.fastq.gz -y -l 50 -h ${id}.html -j ${id}.json
+    fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
   """ 
 // fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
 //	fastp -i $forward -I $reverse -w ${task.cpus} -o ${id}_1.fq.gz -O ${id}_2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
