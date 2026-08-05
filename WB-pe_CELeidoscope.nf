@@ -104,14 +104,11 @@ process fetch_genome {
         gunzip geneset.gtf.gz
         gunzip reference.fa.gz
         
-        cat ${aux}/transgenes/fp.fa >> reference.fa
-        cat ${aux}/transgenes/fp.gtf >> geneset.gtf
+        cat ${aux}/transgenes/plasmids_fp.fa >> reference.fa
+        cat ${aux}/transgenes/plasmids_fp.gtf >> geneset.gtf
         
         gzip reference.fa
         gzip geneset.gtf
-        
-        mv reference.fa.gz reference.fa.gz
-        mv geneset.gtf.gz geneset.gtf.gz
 
     """
 }
