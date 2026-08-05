@@ -104,8 +104,8 @@ process fetch_genome {
         gunzip geneset.gtf.gz
         gunzip reference.fa.gz
         
-        cat ${aux}/transgenes/plasmids_fp.fa >> reference.fa
-        cat ${aux}/transgenes/plasmids_fp.gtf >> geneset.gtf
+        cat ${aux}/CELeidoscope/plasmids_fp.fa >> reference.fa
+        cat ${aux}/CELeidoscope/plasmids_fp.gtf >> geneset.gtf
         
         gzip reference.fa
         gzip geneset.gtf
