@@ -1,15 +1,15 @@
-pMZ0125_mKO2	custom	gene	1	5603	.	+	.	gene_id "mKO2"; gene_name "mKO2";
-pMZ0125_mKO2	custom	transcript	1	5603	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1";
-pMZ0125_mKO2	custom	exon	1	5603	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1"; exon_number "1";
+pMZ0125_mKO2	custom	gene	2750	3465	.	+	.	gene_id "mKO2"; gene_name "mKO2";
+pMZ0125_mKO2	custom	transcript	2750	3465	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1";
+pMZ0125_mKO2	custom	exon	2750	3465	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1"; exon_number "1";
 
-pMZ0120_YFP	custom	gene	1	5958	.	+	.	gene_id "YFP"; gene_name "YFP";
-pMZ0120_YFP	custom	transcript	1	5958	.	+	.	gene_id "YFP"; transcript_id "YFP.1";
-pMZ0120_YFP	custom	exon	1	5958	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "1";
+pMZ0120_YFP	custom	gene	3672	4388	.	+	.	gene_id "YFP"; gene_name "YFP";
+pMZ0120_YFP	custom	transcript	3672	4388	.	+	.	gene_id "YFP"; transcript_id "YFP.1";
+pMZ0120_YFP	custom	exon	3672	4388	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "1";
 
-pDD04neo_GFP	custom	gene	1	9672	.	+	.	gene_id "GFP"; gene_name "GFP";
-pDD04neo_GFP	custom	transcript	1	9672	.	+	.	gene_id "GFP"; transcript_id "GFP.1";
-pDD04neo_GFP	custom	exon	1	9672	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "1";
+pDD04neo_GFP	custom	gene	6487	7203	.	+	.	gene_id "GFP"; gene_name "GFP";
+pDD04neo_GFP	custom	transcript	6487	7203	.	+	.	gene_id "GFP"; transcript_id "GFP.1";
+pDD04neo_GFP	custom	exon	6487	7203	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "1";
 
-pCFJ104_mCherry	custom	gene	1	6634	.	+	.	gene_id "mCherry"; gene_name "mCherry";
-pCFJ104_mCherry	custom	transcript	1	6634	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1";
-pCFJ104_mCherry	custom	exon	1	6634	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1"; exon_number "1";
+pCFJ104_mCherry	custom	gene	2743	3458	.	+	.	gene_id "mCherry"; gene_name "mCherry";
+pCFJ104_mCherry	custom	transcript	2743	3458	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1";
+pCFJ104_mCherry	custom	exon	2743	3458	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1"; exon_number "1";
