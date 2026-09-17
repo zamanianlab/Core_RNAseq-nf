@@ -183,7 +183,8 @@ process star_align {
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
             --outFileNamePrefix ${id}. --readFilesIn ${forward} ${reverse}\
             --peOverlapNbasesMin 10 \
-            --quantMode GeneCounts --outSAMattrRGline ID:${id}
+            --quantMode GeneCounts --outSAMattrRGline ID:${id} \
+            --outFilterMultimapNmax 1 --outSAMmultNmax 1 
           samtools sort -@ ${task.cpus} -m 24G -o ${id}.bam ${id}.Aligned.out.bam
           rm *.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
