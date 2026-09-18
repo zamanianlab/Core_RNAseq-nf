@@ -2,9 +2,9 @@ pMZ0125_mKO2	custom	gene	1	657	.	+	.	gene_id "mKO2"; gene_name "mKO2";
 pMZ0125_mKO2	custom	transcript	1	657	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1";
 pMZ0125_mKO2	custom	exon	1	657	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1"; exon_number "1";
 
-pMZ0120_YFP	custom	gene	1	849	.	+	.	gene_id "YFP"; gene_name "YFP";
-pMZ0120_YFP	custom	transcript	1	849	.	+	.	gene_id "YFP"; transcript_id "YFP.1";
-pMZ0120_YFP	custom	exon	1	849	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "1";
+pMZ0120_YFP	custom	gene	1	870	.	+	.	gene_id "YFP"; gene_name "YFP";
+pMZ0120_YFP	custom	transcript	1	870	.	+	.	gene_id "YFP"; transcript_id "YFP.1";
+pMZ0120_YFP	custom	exon	1	870	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "1";
 
 pDD04neo_GFP	custom	gene	1	870	.	+	.	gene_id "GFP"; gene_name "GFP";
 pDD04neo_GFP	custom	transcript	1	870	.	+	.	gene_id "GFP"; transcript_id "GFP.1";
