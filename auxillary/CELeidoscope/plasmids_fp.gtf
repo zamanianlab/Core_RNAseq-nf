@@ -4,12 +4,20 @@ pMZ0125_mKO2	custom	exon	1	657	.	+	.	gene_id "mKO2"; transcript_id "mKO2.1"; exo
 
 pMZ0120_YFP	custom	gene	1	870	.	+	.	gene_id "YFP"; gene_name "YFP";
 pMZ0120_YFP	custom	transcript	1	870	.	+	.	gene_id "YFP"; transcript_id "YFP.1";
-pMZ0120_YFP	custom	exon	1	870	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "1";
+pMZ0120_YFP	custom	exon	1	171	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "1";
+pMZ0120_YFP	custom	exon	223	376	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "2";
+pMZ0120_YFP	custom	exon	428	591	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "3";
+pMZ0120_YFP	custom	exon	643	870	.	+	.	gene_id "YFP"; transcript_id "YFP.1"; exon_number "4";
 
 pDD04neo_GFP	custom	gene	1	870	.	+	.	gene_id "GFP"; gene_name "GFP";
 pDD04neo_GFP	custom	transcript	1	870	.	+	.	gene_id "GFP"; transcript_id "GFP.1";
-pDD04neo_GFP	custom	exon	1	870	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "1";
+pDD04neo_GFP	custom	exon	1	171	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "1";
+pDD04neo_GFP	custom	exon	223	376	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "2";
+pDD04neo_GFP	custom	exon	428	591	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "3";
+pDD04neo_GFP	custom	exon	643	870	.	+	.	gene_id "GFP"; transcript_id "GFP.1"; exon_number "4";
 
 pCFJ104_mCherry	custom	gene	1	602	.	+	.	gene_id "mCherry"; gene_name "mCherry";
 pCFJ104_mCherry	custom	transcript	1	602	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1";
-pCFJ104_mCherry	custom	exon	1	602	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1"; exon_number "1";
+pCFJ104_mCherry	custom	exon	1	156	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1"; exon_number "1";
+pCFJ104_mCherry	custom	exon	208	401	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1"; exon_number "2";
+pCFJ104_mCherry	custom	exon	453	602	.	+	.	gene_id "mCherry"; transcript_id "mCherry.1"; exon_number "3";
