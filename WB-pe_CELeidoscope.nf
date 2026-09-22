@@ -154,11 +154,11 @@ process star_index {
 
 process star_align {
 
-    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.Log.final.out'
-    publishDir "${output}/${params.dir}/star", mode: 'copy', pattern: '*.flagstat.txt'
+    publishDir "${output}/${params.dir}/star",   mode: 'copy', pattern: '*.Log.final.out'
+    publishDir "${output}/${params.dir}/star",   mode: 'copy', pattern: '*.flagstat.txt'
     publishDir "${output}/${params.dir}/counts", mode: 'copy', pattern: '*.ReadsPerGene.tab'
-    publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam'
-    //publishDir "${output}/${params.dir}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/${params.dir}/bams",   mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/${params.dir}/bams",   mode: 'copy', pattern: '*.Aligned.toTranscriptome.out.bam'  
 
     cpus big
     tag { id }
@@ -167,32 +167,74 @@ process star_align {
     when:
       params.star
 
-     input:
-         file("STAR_index/*") from star_indices
-         tuple val(id), file(forward), file(reverse) from trimmed_reads_star
+    input:
+        file("STAR_index/*") from star_indices
+        tuple val(id), file(forward), file(reverse) from trimmed_reads_star
 
     output:
         tuple file("${id}.Log.final.out"), file("${id}.flagstat.txt") into alignment_logs_star
         tuple id, file("${id}.bam"), file("${id}.bam.bai") into bam_files_star
         file("${id}.ReadsPerGene.tab") into star_counts
+        tuple val(id), file("${id}.Aligned.toTranscriptome.out.bam") into transcriptome_bams_star 
 
     script:
-
         """
-          STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index\
+          STAR --runThreadN ${task.cpus} --runMode alignReads --genomeDir STAR_index \
             --outSAMtype BAM Unsorted --readFilesCommand zcat \
-            --outFileNamePrefix ${id}. --readFilesIn ${forward} ${reverse}\
+            --outSAMprimaryFlag AllBestScore \
+            --outFileNamePrefix ${id}. --readFilesIn ${forward} ${reverse} \
             --peOverlapNbasesMin 10 \
-            --quantMode GeneCounts --outSAMattrRGline ID:${id}  
+            --quantMode TranscriptomeSAM GeneCounts \
+            --outSAMattrRGline ID:${id}
           samtools sort -@ ${task.cpus} -m 24G -o ${id}.bam ${id}.Aligned.out.bam
-          rm *.Aligned.out.bam
+          rm ${id}.Aligned.out.bam
           samtools index -@ ${task.cpus} -b ${id}.bam
           samtools flagstat ${id}.bam > ${id}.flagstat.txt
           cat ${id}.ReadsPerGene.out.tab | cut -f 1,2 > ${id}.ReadsPerGene.tab
         """
-// remove -m 12G
 }
-bam_files_star.into {bam_files_qc}
+bam_files_star.into { bam_files_qc }
+
+
+process salmon_fp_quant {
+
+    publishDir "${output}/${params.dir}/salmon_fp", mode: 'copy', pattern: '*/quant.sf'
+
+    cpus small
+    tag { id }
+
+    when:
+      params.star
+
+    input:
+        tuple val(id), file(transcriptome_bam) from transcriptome_bams_star
+
+    output:
+        file("${id}/quant.sf") into salmon_fp_counts
+
+    script:
+        """
+          # Extract reads mapping to FP transcripts + their mates, convert to FASTQ
+          samtools view -b \\
+              -e 'rname =~ "^pMZ|^pDD|^pCFJ"' \\
+              ${transcriptome_bam} | \\
+            samtools sort -n - | \\
+            samtools fastq \\
+              -1 fp_R1.fastq.gz \\
+              -2 fp_R2.fastq.gz \\
+              -s /dev/null -0 /dev/null
+
+          salmon quant \\
+            -i ${aux}/CELeidoscope/fp_salmon_index \\
+            -l A \\
+            -1 fp_R1.fastq.gz \\
+            -2 fp_R2.fastq.gz \\
+            -o ${id} \\
+            --validateMappings \\
+            --numBootstraps 50 \\
+            -p ${task.cpus}
+        """
+}
 
 
 ////////////////////////////////////////////////
