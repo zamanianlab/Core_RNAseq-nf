@@ -184,6 +184,7 @@ process star_align {
             --outSAMprimaryFlag AllBestScore \
             --outFileNamePrefix ${id}. --readFilesIn ${forward} ${reverse} \
             --peOverlapNbasesMin 10 \
+            --outSAMmultNmax -1 \
             --quantMode TranscriptomeSAM GeneCounts \
             --outSAMattrRGline ID:${id}
           samtools sort -@ ${task.cpus} -m 24G -o ${id}.bam ${id}.Aligned.out.bam
