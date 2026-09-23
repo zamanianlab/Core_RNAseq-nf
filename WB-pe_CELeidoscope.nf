@@ -197,6 +197,25 @@ process star_align {
 bam_files_star.into { bam_files_qc }
 
 
+process salmon_fp_index {
+
+    cpus small
+
+    when:
+      params.star
+
+    output:
+        file("fp_salmon_index") into fp_salmon_idx
+
+    script:
+        """
+          salmon index \\
+            -t ${aux}/CELeidoscope/fp_spliced.fa \\
+            -i fp_salmon_index \\
+            -k 19
+        """
+}
+
 process salmon_fp_quant {
 
     publishDir "${output}/${params.dir}/salmon_fp", mode: 'copy', pattern: '*/quant.sf'
@@ -208,6 +227,7 @@ process salmon_fp_quant {
       params.star
 
     input:
+        file("fp_salmon_index") from fp_salmon_idx
         tuple val(id), file(transcriptome_bam) from transcriptome_bams_star
 
     output:
@@ -215,7 +235,6 @@ process salmon_fp_quant {
 
     script:
         """
-          # Extract reads mapping to FP transcripts + their mates, convert to FASTQ
           samtools view -b \\
               -e 'rname =~ "^pMZ|^pDD|^pCFJ"' \\
               ${transcriptome_bam} | \\
@@ -226,7 +245,7 @@ process salmon_fp_quant {
               -s /dev/null -0 /dev/null
 
           salmon quant \\
-            -i ${aux}/CELeidoscope/fp_salmon_index \\
+            -i fp_salmon_index \\
             -l A \\
             -1 fp_R1.fastq.gz \\
             -2 fp_R2.fastq.gz \\
